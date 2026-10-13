@@ -418,29 +418,53 @@ def episode_hourly_context(
     # DEVICE USAGE
     # ========================================================
 
-    device_records = np.zeros(
+    # Device-usage exports may contain repeated copies of the
+    # same timestamp. Canonical source records remain untouched;
+    # deduplication occurs only here in the derived hourly layer.
+
+    device_raw_records = np.zeros(
         n_hours,
         dtype=np.int64,
     )
 
-    duration_sum = np.zeros(
+    device_unique_records = np.zeros(
         n_hours,
-        dtype=float,
+        dtype=np.int64,
     )
 
-    unlock_duration_sum = np.zeros(
+    device_duplicate_records = np.zeros(
         n_hours,
-        dtype=float,
+        dtype=np.int64,
     )
 
-    unlocks_sum = np.zeros(
+    device_max_multiplicity = np.zeros(
         n_hours,
-        dtype=float,
+        dtype=np.int64,
     )
 
-    wakes_sum = np.zeros(
+    device_conflict_timestamps = np.zeros(
         n_hours,
-        dtype=float,
+        dtype=np.int64,
+    )
+
+    duration_sum = np.full(
+        n_hours,
+        np.nan,
+    )
+
+    unlock_duration_sum = np.full(
+        n_hours,
+        np.nan,
+    )
+
+    unlocks_sum = np.full(
+        n_hours,
+        np.nan,
+    )
+
+    wakes_sum = np.full(
+        n_hours,
+        np.nan,
     )
 
     has_device_usage = bool(
@@ -449,6 +473,8 @@ def episode_hourly_context(
             False,
         )
     )
+
+    device_frames = []
 
     if has_device_usage:
 
@@ -484,84 +510,275 @@ def episode_hourly_context(
                 n_hours=n_hours,
             )
 
+            if not valid.any():
+                continue
+
             z = z.iloc[
                 np.flatnonzero(valid)
-            ]
+            ].copy()
 
-            h = h[valid]
-
-            device_records += (
-                np.bincount(
-                    h,
-                    minlength=n_hours,
-                )
+            z["timestamp_ms"] = (
+                t[valid]
             )
 
-            mappings = [
-                (
-                    "interval_duration_ms",
-                    duration_sum,
-                ),
-                (
-                    "total_unlock_duration_ms",
-                    unlock_duration_sum,
-                ),
-                (
-                    "total_unlocks",
-                    unlocks_sum,
-                ),
-                (
-                    "total_screen_wakes",
-                    wakes_sum,
-                ),
+            z["_hour_index"] = (
+                h[valid]
+            )
+
+            keep = [
+                "timestamp_ms",
+                "_hour_index",
+                "interval_duration_ms",
+                "total_unlock_duration_ms",
+                "total_unlocks",
+                "total_screen_wakes",
             ]
 
-            for column, target in mappings:
+            for col in keep:
+                if col not in z.columns:
+                    z[col] = np.nan
 
-                if column not in z.columns:
-                    continue
+            device_frames.append(
+                z[keep]
+            )
 
-                values = pd.to_numeric(
-                    z[column],
-                    errors="coerce",
-                ).fillna(
-                    0
-                ).to_numpy(
-                    dtype=float
+    if device_frames:
+
+        d = pd.concat(
+            device_frames,
+            ignore_index=True,
+        )
+
+        numeric_cols = [
+            "interval_duration_ms",
+            "total_unlock_duration_ms",
+            "total_unlocks",
+            "total_screen_wakes",
+        ]
+
+        for col in numeric_cols:
+            d[col] = pd.to_numeric(
+                d[col],
+                errors="coerce",
+            )
+
+        # Raw record counts before deduplication.
+        device_raw_records = (
+            np.bincount(
+                d[
+                    "_hour_index"
+                ].to_numpy(
+                    dtype=np.int64
+                ),
+                minlength=n_hours,
+            )
+            .astype(np.int64)
+        )
+
+        # Collapse all copies of the same report timestamp.
+        grouped = d.groupby(
+            "timestamp_ms",
+            sort=False,
+        )
+
+        collapsed = pd.DataFrame({
+            "_hour_index":
+                grouped[
+                    "_hour_index"
+                ]
+                .first()
+                .astype(
+                    np.int64
+                ),
+
+            "_multiplicity":
+                grouped.size()
+                .astype(
+                    np.int64
+                ),
+        })
+
+        conflict_cols = []
+
+        for col in numeric_cols:
+
+            # first() gives the first non-null value.
+            collapsed[col] = (
+                grouped[col]
+                .first()
+            )
+
+            conflict_col = (
+                f"_{col}_conflict"
+            )
+
+            collapsed[
+                conflict_col
+            ] = (
+                grouped[col]
+                .nunique(
+                    dropna=True
                 )
+                .gt(1)
+            )
 
-                target += np.bincount(
-                    h,
-                    weights=values,
-                    minlength=n_hours,
-                )
+            conflict_cols.append(
+                conflict_col
+            )
 
-    no_device_record = (
-        device_records == 0
-    )
+        collapsed[
+            "_measurement_conflict"
+        ] = (
+            collapsed[
+                conflict_cols
+            ]
+            .any(
+                axis=1
+            )
+        )
 
-    for values in [
-        duration_sum,
-        unlock_duration_sum,
-        unlocks_sum,
-        wakes_sum,
-    ]:
-        values[
-            no_device_record
-        ] = np.nan
+        hour = (
+            collapsed[
+                "_hour_index"
+            ]
+            .to_numpy(
+                dtype=np.int64
+            )
+        )
+
+        device_unique_records = (
+            np.bincount(
+                hour,
+                minlength=n_hours,
+            )
+            .astype(
+                np.int64
+            )
+        )
+
+        device_duplicate_records = (
+            device_raw_records
+            - device_unique_records
+        )
+
+        max_mult = (
+            collapsed
+            .groupby(
+                "_hour_index"
+            )[
+                "_multiplicity"
+            ]
+            .max()
+        )
+
+        for hour_index, value in (
+            max_mult.items()
+        ):
+            device_max_multiplicity[
+                int(hour_index)
+            ] = int(value)
+
+        device_conflict_timestamps = (
+            np.bincount(
+                hour,
+                weights=(
+                    collapsed[
+                        "_measurement_conflict"
+                    ]
+                    .astype(int)
+                    .to_numpy()
+                ),
+                minlength=n_hours,
+            )
+            .astype(
+                np.int64
+            )
+        )
+
+        def hourly_sum(column):
+
+            values = pd.to_numeric(
+                collapsed[column],
+                errors="coerce",
+            )
+
+            result = np.bincount(
+                hour,
+                weights=(
+                    values
+                    .fillna(0)
+                    .to_numpy(
+                        dtype=float
+                    )
+                ),
+                minlength=n_hours,
+            ).astype(float)
+
+            no_reports = (
+                device_unique_records
+                == 0
+            )
+
+            result[
+                no_reports
+            ] = np.nan
+
+            # If duplicate copies disagree at any timestamp
+            # in the hour, do not manufacture a total.
+            result[
+                device_conflict_timestamps
+                > 0
+            ] = np.nan
+
+            return result
+
+        duration_sum = hourly_sum(
+            "interval_duration_ms"
+        )
+
+        unlock_duration_sum = hourly_sum(
+            "total_unlock_duration_ms"
+        )
+
+        unlocks_sum = hourly_sum(
+            "total_unlocks"
+        )
+
+        wakes_sum = hourly_sum(
+            "total_screen_wakes"
+        )
+
 
     out[
         "device_usage_episode_evidence"
     ] = has_device_usage
 
+    # Raw rows preserve export duplication information.
+    out[
+        "device_usage_raw_record_count"
+    ] = device_raw_records
+
+    # Analysis count = distinct report timestamps.
     out[
         "device_usage_record_count"
-    ] = device_records
+    ] = device_unique_records
+
+    out[
+        "device_usage_duplicate_record_count"
+    ] = device_duplicate_records
+
+    out[
+        "device_usage_max_duplicate_multiplicity"
+    ] = device_max_multiplicity
+
+    out[
+        "device_usage_conflict_timestamp_count"
+    ] = device_conflict_timestamps
 
     out[
         "device_usage_observed"
     ] = (
-        device_records > 0
+        device_unique_records > 0
     )
 
     out[
