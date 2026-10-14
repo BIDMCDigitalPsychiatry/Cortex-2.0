@@ -1,104 +1,70 @@
 from pathlib import Path
-import getpass
-import os
 
 import pandas as pd
 import LAMP
 
 
-RISK = Path(
+OS_MAP = Path(
     "../raphe_outputs/digital_clinic/"
-    "quality/hourly_missingness/"
-    "gps_onset_contextual_risk_set.parquet"
+    "inventory/"
+    "risk_episode_ios_sensorkit_evidence_timeaware.csv"
 )
 
 
 # ============================================================
-# CONNECT
+# LOAD 3 CONFIRMED IOS + 3 UNRESOLVED EPISODES
 # ============================================================
 
-access_key = os.getenv(
-    "LAMP_ACCESS_KEY"
-)
-
-secret_key = os.getenv(
-    "LAMP_SECRET_KEY"
-)
-
-server = os.getenv(
-    "LAMP_SERVER_ADDRESS",
-    "api.lamp.digital",
+df = pd.read_csv(
+    OS_MAP
 )
 
 
-if not access_key:
-
-    access_key = input(
-        "LAMP access key/email: "
-    ).strip()
-
-
-if not secret_key:
-
-    secret_key = getpass.getpass(
-        "LAMP password/secret: "
-    )
-
-
-print()
-print(
-    "Connecting to:",
-    server,
-)
-
-LAMP.connect(
-    access_key,
-    secret_key,
-    server,
-)
-
-print(
-    "Connected."
-)
-
-
-# ============================================================
-# SELECT A SMALL SAMPLE OF DIGITAL CLINIC UIDs
-# ============================================================
-
-risk = pd.read_parquet(
-    RISK,
-    columns=[
-        "episode_id",
-        "source_participant_id",
-    ],
-)
-
-uids = (
-    risk[
-        "source_participant_id"
+ios = (
+    df[
+        df[
+            "sensorkit_ios_evidence_in_episode"
+        ] == True
     ]
-    .dropna()
-    .astype(str)
-    .drop_duplicates()
-    .head(12)
-    .tolist()
+    .head(3)
 )
 
 
-print()
-print("=" * 78)
-print("LAMP ANALYTICS OS PROBE")
-print("=" * 78)
-
-print(
-    "Participants tested:",
-    len(uids),
+unresolved = (
+    df[
+        df[
+            "sensorkit_ios_evidence_in_episode"
+        ] == False
+    ]
+    .head(3)
 )
 
 
-rows = []
+sample = pd.concat(
+    [
+        ios,
+        unresolved,
+    ],
+    ignore_index=True,
+)
 
+
+# ============================================================
+# CONNECT USING EXISTING CLUSTER CONFIGURATION
+# ============================================================
+
+print("=" * 78)
+print("CONNECTING TO LAMP")
+print("=" * 78)
+
+LAMP.connect()
+
+print("LAMP.connect() completed.")
+
+
+# ============================================================
+# HELPERS
+# ============================================================
 
 def unwrap(response):
 
@@ -126,26 +92,46 @@ def unwrap(response):
     return []
 
 
-def payload(event):
+# ============================================================
+# QUERY ANALYTICS
+# ============================================================
 
-    d = event.get(
-        "data",
-        {}
+rows = []
+
+
+for _, r in sample.iterrows():
+
+    uid = str(
+        r["source_participant_id"]
     )
 
-    if isinstance(
-        d,
-        dict,
-    ):
-        return d
+    start_ms = int(
+        r["episode_start_ms"]
+    )
 
-    return {}
+    end_ms = int(
+        r["episode_end_ms"]
+    )
+
+    expected_group = (
+        "confirmed_iOS"
+        if bool(
+            r[
+                "sensorkit_ios_evidence_in_episode"
+            ]
+        )
+        else "OS_unresolved"
+    )
 
 
-for i, uid in enumerate(
-    uids,
-    start=1,
-):
+    print()
+    print(
+        "Querying:",
+        uid,
+        "|",
+        expected_group,
+    )
+
 
     try:
 
@@ -154,6 +140,8 @@ for i, uid in enumerate(
             .all_by_participant(
                 uid,
                 origin="lamp.analytics",
+                _from=start_ms,
+                to=end_ms,
             )
         )
 
@@ -167,6 +155,9 @@ for i, uid in enumerate(
             "uid":
                 uid,
 
+            "expected_group":
+                expected_group,
+
             "analytics_events":
                 None,
 
@@ -176,8 +167,8 @@ for i, uid in enumerate(
             "device_types":
                 "ERROR",
 
-            "latest_user_agent":
-                repr(e)[:200],
+            "user_agents":
+                repr(e)[:180],
         })
 
         continue
@@ -187,18 +178,21 @@ for i, uid in enumerate(
 
     for event in events:
 
-        p = payload(
-            event
+        data = event.get(
+            "data",
+            {}
         )
 
-        action = p.get(
-            "action",
-            event.get(
-                "action"
-            ),
-        )
+        if not isinstance(
+            data,
+            dict,
+        ):
+            continue
 
-        if action == "login":
+        if (
+            data.get("action")
+            == "login"
+        ):
 
             login_events.append(
                 event
@@ -209,40 +203,45 @@ for i, uid in enumerate(
 
     user_agents = []
 
+
     for event in login_events:
 
-        p = payload(
-            event
+        data = event.get(
+            "data",
+            {}
         )
 
-        device_type = p.get(
-            "device_type",
-            event.get(
-                "device_type"
-            ),
+        device_type = data.get(
+            "device_type"
         )
 
-        user_agent = p.get(
-            "user_agent",
-            event.get(
-                "user_agent"
-            ),
+        user_agent = data.get(
+            "user_agent"
         )
 
         if device_type:
+
             device_types.append(
-                str(device_type)
+                str(
+                    device_type
+                )
             )
 
         if user_agent:
+
             user_agents.append(
-                str(user_agent)
+                str(
+                    user_agent
+                )
             )
 
 
     rows.append({
         "uid":
             uid,
+
+        "expected_group":
+            expected_group,
 
         "analytics_events":
             len(events),
@@ -259,14 +258,20 @@ for i, uid in enumerate(
                 )
             ),
 
-        "latest_user_agent":
-            (
-                user_agents[0][:180]
-                if user_agents
-                else ""
-            ),
+        "user_agents":
+            " | ".join(
+                sorted(
+                    set(
+                        user_agents
+                    )
+                )[:3]
+            )[:300],
     })
 
+
+# ============================================================
+# REPORT
+# ============================================================
 
 out = pd.DataFrame(
     rows
@@ -274,6 +279,10 @@ out = pd.DataFrame(
 
 
 print()
+print("=" * 78)
+print("LAMP ANALYTICS OS PROBE")
+print("=" * 78)
+
 print(
     out.to_string(
         index=False
@@ -285,19 +294,7 @@ print()
 print("=" * 78)
 
 print(
-    "Participants with login events:",
-    int(
-        out[
-            "login_events"
-        ]
-        .fillna(0)
-        .gt(0)
-        .sum()
-    ),
-)
-
-print(
-    "Participants with OS:",
+    "Episodes with explicit OS:",
     int(
         out[
             "device_types"
@@ -310,6 +307,8 @@ print(
         )
         .sum()
     ),
+    "/",
+    len(out),
 )
 
 print("=" * 78)
