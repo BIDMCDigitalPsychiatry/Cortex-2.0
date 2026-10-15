@@ -190,7 +190,7 @@ for _, r in sample.iterrows():
             continue
 
         if (
-            data.get("action")
+            data.get("type")
             == "login"
         ):
 
