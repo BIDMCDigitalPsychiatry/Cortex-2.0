@@ -1,0 +1,916 @@
+"""Smoke test for RAPHE GPS location-feature degradation.
+
+Experiment:
+- 75% planned temporal coverage
+- distributed missingness
+- one deterministic replicate
+- all 65 high-observability reference days
+- all 3 participants
+- all 4 place compatibility multipliers
+
+Missingness is imposed on RAW GPS points and the complete RAPHE location
+pipeline is rebuilt from scratch.
+"""
+
+from __future__ import annotations
+
+import hashlib
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+
+from raphe.features.gps_degradation import (
+    apply_missing_bin_mask_to_points,
+    make_missing_bin_mask,
+)
+
+from raphe.features.gps_intervals import (
+    build_gps_intervals,
+)
+
+from raphe.features.gps_spatial_semantics import (
+    add_gps_spatial_semantics,
+)
+
+from raphe.features.gps_anchor_episodes import (
+    build_anchor_compatible_location_episodes,
+)
+
+from raphe.features.gps_place_candidates import (
+    build_place_candidates,
+)
+
+from raphe.features.gps_location_features import (
+    compute_daily_location_features,
+)
+
+
+DAY_MS = 86_400_000
+
+MAX_GAP_MS = 60_000
+
+BIN_SIZE_MS = (
+    5
+    * 60_000
+)
+
+TARGET_COVERAGE = 0.75
+
+PATTERN = "distributed"
+
+REPLICATE = 0
+
+BASE_SEED = 20261019
+
+
+MULTIPLIERS = [
+    0.75,
+    1.00,
+    1.50,
+    2.00,
+]
+
+
+ROOT = Path(
+    "/shared/Digital Clinic/"
+    "raphe_outputs/digital_clinic/"
+    "feature_reliability/"
+    "gps_observability"
+)
+
+RAW_PATH = (
+    ROOT
+    / "gps_reference_raw_points.parquet"
+)
+
+REFERENCE_PATH = (
+    ROOT
+    / "gps_reference_location_features_rebuilt_from_raw.parquet"
+)
+
+DAILY_OUT = (
+    ROOT
+    / "gps_location_degradation_smoke_daily.parquet"
+)
+
+SUMMARY_OUT = (
+    ROOT
+    / "gps_location_degradation_smoke_summary.csv"
+)
+
+
+def stable_seed(
+    *parts,
+) -> int:
+    """Deterministic seed independent of Python hash randomization."""
+
+    text = "|".join(
+        str(part)
+        for part in parts
+    )
+
+    digest = hashlib.blake2b(
+        text.encode(
+            "utf-8"
+        ),
+        digest_size=8,
+    ).digest()
+
+    return (
+        int.from_bytes(
+            digest,
+            byteorder="little",
+            signed=False,
+        )
+        % (2 ** 32)
+    )
+
+
+# ============================================================
+# LOAD
+# ============================================================
+
+raw = pd.read_parquet(
+    RAW_PATH
+)
+
+reference = pd.read_parquet(
+    REFERENCE_PATH
+)
+
+
+raw["date"] = (
+    raw["date"]
+    .astype(str)
+)
+
+reference["date"] = (
+    reference["date"]
+    .astype(str)
+)
+
+
+print("=" * 80)
+print("RAPHE GPS LOCATION DEGRADATION SMOKE TEST")
+print("=" * 80)
+
+print(
+    "Target coverage:",
+    TARGET_COVERAGE,
+)
+
+print(
+    "Pattern:",
+    PATTERN,
+)
+
+print(
+    "Simulation bin:",
+    f"{BIN_SIZE_MS / 60_000:.0f} minutes",
+)
+
+print(
+    "Raw rows:",
+    f"{len(raw):,}",
+)
+
+print(
+    "Participant-days:",
+    raw[
+        [
+            "participant_id",
+            "date",
+        ]
+    ]
+    .drop_duplicates()
+    .shape[0],
+)
+
+
+# ============================================================
+# DEGRADE + REBUILD MICROSEGMENTS
+# ============================================================
+
+participant_microsegments = {}
+
+day_metadata = {}
+
+
+for (
+    participant_id,
+    uid,
+), participant_raw in raw.groupby(
+    [
+        "participant_id",
+        "mindlamp_uid",
+    ],
+    sort=True,
+):
+
+    print()
+    print("-" * 80)
+    print(
+        participant_id,
+        uid,
+    )
+
+
+    microsegment_frames = []
+
+
+    for date, day_raw in participant_raw.groupby(
+        "date",
+        sort=True,
+    ):
+
+        day_start_values = (
+            day_raw[
+                "day_start_ms"
+            ]
+            .dropna()
+            .unique()
+        )
+
+
+        if len(day_start_values) != 1:
+
+            raise RuntimeError(
+                f"{participant_id} {date}: "
+                "expected one day_start_ms"
+            )
+
+
+        day_start_ms = int(
+            day_start_values[0]
+        )
+
+        day_end_ms = (
+            day_start_ms
+            + DAY_MS
+        )
+
+
+        seed = stable_seed(
+            BASE_SEED,
+            participant_id,
+            date,
+            TARGET_COVERAGE,
+            PATTERN,
+            REPLICATE,
+        )
+
+
+        missing_mask, mask_info = (
+            make_missing_bin_mask(
+                window_start_ms=(
+                    day_start_ms
+                ),
+                window_end_ms=(
+                    day_end_ms
+                ),
+                target_coverage=(
+                    TARGET_COVERAGE
+                ),
+                pattern=PATTERN,
+                bin_size_ms=(
+                    BIN_SIZE_MS
+                ),
+                seed=seed,
+            )
+        )
+
+
+        degraded_raw = (
+            apply_missing_bin_mask_to_points(
+                day_raw,
+                window_start_ms=(
+                    day_start_ms
+                ),
+                window_end_ms=(
+                    day_end_ms
+                ),
+                bin_size_ms=(
+                    BIN_SIZE_MS
+                ),
+                missing_mask=(
+                    missing_mask
+                ),
+            )
+        )
+
+
+        raw_fraction_retained = (
+            len(degraded_raw)
+            / len(day_raw)
+            if len(day_raw)
+            else np.nan
+        )
+
+
+        intervals = build_gps_intervals(
+            degraded_raw[
+                [
+                    "timestamp",
+                    "latitude",
+                    "longitude",
+                    "accuracy",
+                ]
+            ],
+            window_start_ms=(
+                day_start_ms
+            ),
+            window_end_ms=(
+                day_end_ms
+            ),
+            max_gap_ms=(
+                MAX_GAP_MS
+            ),
+        )
+
+
+        supported = (
+            intervals[
+                intervals[
+                    "supported"
+                ]
+            ]
+            .copy()
+        )
+
+
+        supported_duration_ms = float(
+            supported[
+                "duration_ms"
+            ].sum()
+        )
+
+
+        supported_fraction_of_day = (
+            supported_duration_ms
+            / DAY_MS
+        )
+
+
+        metadata = {
+            "mindlamp_uid":
+                uid,
+
+            "planned_coverage":
+                float(
+                    mask_info[
+                        "planned_coverage"
+                    ]
+                ),
+
+            "raw_rows_original":
+                len(day_raw),
+
+            "raw_rows_retained":
+                len(degraded_raw),
+
+            "raw_fraction_retained":
+                raw_fraction_retained,
+
+            "n_intervals":
+                len(intervals),
+
+            "n_supported_edges":
+                len(supported),
+
+            "supported_duration_ms":
+                supported_duration_ms,
+
+            "supported_fraction_of_day":
+                supported_fraction_of_day,
+        }
+
+
+        day_metadata[
+            (
+                participant_id,
+                str(date),
+            )
+        ] = metadata
+
+
+        if supported.empty:
+            continue
+
+
+        supported = (
+            add_gps_spatial_semantics(
+                supported
+            )
+        )
+
+
+        microsegments = (
+            build_anchor_compatible_location_episodes(
+                supported
+            )
+        )
+
+
+        if microsegments.empty:
+            continue
+
+
+        microsegments[
+            "participant_id"
+        ] = participant_id
+
+        microsegments[
+            "mindlamp_uid"
+        ] = uid
+
+        microsegments[
+            "date"
+        ] = str(date)
+
+
+        microsegment_frames.append(
+            microsegments
+        )
+
+
+    if microsegment_frames:
+
+        participant_segments = pd.concat(
+            microsegment_frames,
+            ignore_index=True,
+        )
+
+    else:
+
+        participant_segments = pd.DataFrame()
+
+
+    participant_microsegments[
+        participant_id
+    ] = participant_segments
+
+
+    participant_day_metadata = [
+        value
+        for (
+            pid,
+            _
+        ), value
+        in day_metadata.items()
+        if pid == participant_id
+    ]
+
+
+    print(
+        "  days:",
+        len(
+            participant_day_metadata
+        ),
+    )
+
+    print(
+        "  microsegments:",
+        f"{len(participant_segments):,}",
+    )
+
+    median_raw_fraction_retained = float(
+        np.median(
+            [
+                x["raw_fraction_retained"]
+                for x in participant_day_metadata
+            ]
+        )
+    )
+
+    median_supported_fraction_of_day = float(
+        np.median(
+            [
+                x["supported_fraction_of_day"]
+                for x in participant_day_metadata
+            ]
+        )
+    )
+
+    print(
+        "  median raw fraction retained:",
+        f"{median_raw_fraction_retained:.4f}",
+    )
+
+    print(
+        "  median supported fraction of day:",
+        f"{median_supported_fraction_of_day:.4f}",
+    )
+
+
+# ============================================================
+# BUILD PARTICIPANT-LEVEL PLACES + DAILY FEATURES
+# ============================================================
+
+feature_rows = []
+
+
+for participant_id, microsegments in (
+    participant_microsegments.items()
+):
+
+    dates = sorted(
+        raw.loc[
+            raw[
+                "participant_id"
+            ]
+            == participant_id,
+            "date",
+        ]
+        .unique()
+        .tolist()
+    )
+
+
+    for multiplier in MULTIPLIERS:
+
+        if microsegments.empty:
+
+            assignments = pd.DataFrame(
+                columns=[
+                    "date",
+                    "place_candidate_id",
+                    "duration_ms",
+                ]
+            )
+
+        else:
+
+            assignments, _ = (
+                build_place_candidates(
+                    microsegments,
+                    compatibility_multiplier=(
+                        multiplier
+                    ),
+                )
+            )
+
+
+        for date in dates:
+
+            meta = day_metadata[
+                (
+                    participant_id,
+                    str(date),
+                )
+            ]
+
+
+            if assignments.empty:
+
+                day_assignments = pd.DataFrame(
+                    columns=[
+                        "place_candidate_id",
+                        "duration_ms",
+                    ]
+                )
+
+            else:
+
+                day_assignments = (
+                    assignments[
+                        assignments[
+                            "date"
+                        ].astype(str)
+                        == str(date)
+                    ]
+                )
+
+
+            result = (
+                compute_daily_location_features(
+                    day_assignments,
+                    supported_duration_ms=(
+                        meta[
+                            "supported_duration_ms"
+                        ]
+                    ),
+                )
+            )
+
+
+            result.update({
+                "compatibility_multiplier":
+                    float(
+                        multiplier
+                    ),
+
+                "participant_id":
+                    participant_id,
+
+                "mindlamp_uid":
+                    meta[
+                        "mindlamp_uid"
+                    ],
+
+                "date":
+                    str(date),
+
+                "target_coverage":
+                    TARGET_COVERAGE,
+
+                "missingness_pattern":
+                    PATTERN,
+
+                "replicate":
+                    REPLICATE,
+
+                "planned_coverage":
+                    meta[
+                        "planned_coverage"
+                    ],
+
+                "raw_fraction_retained":
+                    meta[
+                        "raw_fraction_retained"
+                    ],
+
+                "supported_fraction_of_day":
+                    meta[
+                        "supported_fraction_of_day"
+                    ],
+
+                "n_supported_edges":
+                    meta[
+                        "n_supported_edges"
+                    ],
+            })
+
+
+            feature_rows.append(
+                result
+            )
+
+
+degraded = pd.DataFrame(
+    feature_rows
+)
+
+
+# ============================================================
+# JOIN FULL-DATA REFERENCE
+# ============================================================
+
+reference_keep = (
+    reference[
+        [
+            "compatibility_multiplier",
+            "participant_id",
+            "date",
+            "location_entropy_nats",
+            "dominant_place_fraction",
+            "effective_number_places",
+        ]
+    ]
+    .rename(
+        columns={
+            "location_entropy_nats":
+                "reference_entropy_nats",
+
+            "dominant_place_fraction":
+                "reference_dominant_fraction",
+
+            "effective_number_places":
+                "reference_effective_places",
+        }
+    )
+)
+
+
+comparison = degraded.merge(
+    reference_keep,
+    on=[
+        "compatibility_multiplier",
+        "participant_id",
+        "date",
+    ],
+    how="left",
+    validate="one_to_one",
+)
+
+
+comparison[
+    "entropy_error"
+] = (
+    comparison[
+        "location_entropy_nats"
+    ]
+    - comparison[
+        "reference_entropy_nats"
+    ]
+)
+
+
+comparison[
+    "abs_entropy_error"
+] = (
+    comparison[
+        "entropy_error"
+    ].abs()
+)
+
+
+comparison[
+    "dominant_fraction_error"
+] = (
+    comparison[
+        "dominant_place_fraction"
+    ]
+    - comparison[
+        "reference_dominant_fraction"
+    ]
+)
+
+
+comparison[
+    "abs_dominant_fraction_error"
+] = (
+    comparison[
+        "dominant_fraction_error"
+    ].abs()
+)
+
+
+comparison[
+    "effective_places_error"
+] = (
+    comparison[
+        "effective_number_places"
+    ]
+    - comparison[
+        "reference_effective_places"
+    ]
+)
+
+
+comparison[
+    "abs_effective_places_error"
+] = (
+    comparison[
+        "effective_places_error"
+    ].abs()
+)
+
+
+comparison.to_parquet(
+    DAILY_OUT,
+    index=False,
+)
+
+
+# ============================================================
+# PARTICIPANT SUMMARY
+# ============================================================
+
+summary_rows = []
+
+
+for (
+    multiplier,
+    participant_id,
+), x in comparison.groupby(
+    [
+        "compatibility_multiplier",
+        "participant_id",
+    ],
+    sort=True,
+):
+
+    summary_rows.append({
+        "compatibility_multiplier":
+            multiplier,
+
+        "participant_id":
+            participant_id,
+
+        "days":
+            len(x),
+
+        "median_raw_fraction_retained":
+            x[
+                "raw_fraction_retained"
+            ].median(),
+
+        "median_supported_fraction_of_day":
+            x[
+                "supported_fraction_of_day"
+            ].median(),
+
+        "median_abs_entropy_error":
+            x[
+                "abs_entropy_error"
+            ].median(),
+
+        "p90_abs_entropy_error":
+            x[
+                "abs_entropy_error"
+            ].quantile(
+                0.90
+            ),
+
+        "median_entropy_bias":
+            x[
+                "entropy_error"
+            ].median(),
+
+        "median_abs_dominant_error":
+            x[
+                "abs_dominant_fraction_error"
+            ].median(),
+
+        "p90_abs_dominant_error":
+            x[
+                "abs_dominant_fraction_error"
+            ].quantile(
+                0.90
+            ),
+
+        "median_dominant_bias":
+            x[
+                "dominant_fraction_error"
+            ].median(),
+
+        "median_abs_effective_places_error":
+            x[
+                "abs_effective_places_error"
+            ].median(),
+    })
+
+
+summary = pd.DataFrame(
+    summary_rows
+)
+
+
+summary.to_csv(
+    SUMMARY_OUT,
+    index=False,
+)
+
+
+# ============================================================
+# PRINT
+# ============================================================
+
+print()
+print("=" * 80)
+print("SMOKE TEST FEATURE ERRORS")
+print("=" * 80)
+
+print(
+    summary.to_string(
+        index=False,
+        float_format=lambda x:
+            f"{x:.4f}",
+    )
+)
+
+
+print()
+print("=" * 80)
+print("BOOKKEEPING")
+print("=" * 80)
+
+print(
+    "Expected feature rows:",
+    65 * len(
+        MULTIPLIERS
+    ),
+)
+
+print(
+    "Actual feature rows:",
+    len(
+        comparison
+    ),
+)
+
+print(
+    "Missing reference matches:",
+    int(
+        comparison[
+            "reference_entropy_nats"
+        ]
+        .isna()
+        .sum()
+    ),
+)
+
+
+print()
+print("=" * 80)
+print("OUTPUTS")
+print("=" * 80)
+
+print(DAILY_OUT)
+print(SUMMARY_OUT)
+
+print()
+print("=" * 80)
+print("DONE")
+print("=" * 80)
