@@ -44,3 +44,7 @@ cortex_cache/
 
 # Study-specific local configs
 configs/*.local.yaml
+
+# Slurm validation runtime logs
+gps_validation_*.out
+gps_validation_*.err
