@@ -48,3 +48,7 @@ configs/*.local.yaml
 # Slurm validation runtime logs
 gps_validation_*.out
 gps_validation_*.err
+
+# Intermediate missingness Slurm logs
+gps_intermediate_*.out
+gps_intermediate_*.err
