@@ -287,6 +287,11 @@ class SensorStreamClient:
             A DataFrame with exactly the columns ``timestamp``
             (``int64``, epoch ms) and ``x``, ``y``, ``z``
             (``float32``, m/s²).
+
+        Raises:
+            SensorStreamIntegrityError: A listing entry has no
+                ``sha256``, or a frame's bytes don't match it.
+            TelemetryDecodeError: A frame fails a decoder check.
         """
         metas = self.list_frames(
             participant_id,
@@ -307,10 +312,19 @@ class SensorStreamClient:
         parts = []
 
         for frame_index, meta in enumerate(metas):
+            # Fail closed: never decode bytes you can't verify.
+            expected_sha256 = meta.get("sha256")
+
+            if not expected_sha256:
+                raise SensorStreamIntegrityError(
+                    f"Frame {meta.get('id')} has no sha256 in its "
+                    f"listing entry, so its bytes can't be verified"
+                )
+
             blob = self.download_frame(
                 participant_id,
                 meta["id"],
-                expected_sha256=meta.get("sha256"),
+                expected_sha256=expected_sha256,
             )
 
             part = decode_accel_frame(

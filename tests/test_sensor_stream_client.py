@@ -337,6 +337,19 @@ def test_load_rejects_corrupted_download():
         make_client(server).load(PID, SPEC, None, None)
 
 
+@pytest.mark.parametrize("sha256", [None, ""])
+def test_load_rejects_listing_entry_without_sha256(sha256):
+    meta, blob = golden_frame()
+    if sha256 is None:
+        del meta["sha256"]
+    else:
+        meta["sha256"] = sha256
+    server = FakeServer([(meta, blob)])
+
+    with pytest.raises(SensorStreamIntegrityError, match="sha256"):
+        make_client(server).load(PID, SPEC, None, None)
+
+
 def test_download_sha256_check_ignores_case():
     meta, blob = golden_frame()
     server = FakeServer([(meta, blob)])
