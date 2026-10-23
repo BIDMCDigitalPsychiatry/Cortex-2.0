@@ -93,6 +93,41 @@ Run the test suite:
 pytest -q
 ```
 
+## Load binary accelerometer telemetry
+
+mindLAMP's high-rate accelerometer sensors (`lamp.accelerometer10hz`,
+`20hz`, `50hz`, and `100hz`) upload compressed binary frames to LAMP-server's
+sensor-stream API. The format is defined in the LAMP-protocol contract
+`docs/sensor-stream.md`.
+
+To read them, install the `telemetry` extra:
+
+```bash
+pip install -e ".[telemetry]"
+```
+
+Then set `LAMP_SERVER_ADDRESS` and `LAMP_API_KEY` (or pass them as
+arguments), and load a half-open `[start_ms, end_ms)` range:
+
+```python
+from cortex2_engine.io.sensor_stream_client import SensorStreamClient
+
+client = SensorStreamClient()  # https:// is added if the address has no scheme
+df = client.load(
+    "U1234567890",
+    "lamp.accelerometer50hz",
+    start_ms=1790000100000,
+    end_ms=1790000400000,
+)
+```
+
+`load` returns the columns `timestamp` (`int64`, epoch ms) and `x`, `y`, `z`
+(`float32`, m/s², Android axes), sorted ascending unless you pass
+`ascending=False`. It verifies each frame's `sha256`, applies the contract's
+decoder checks, merges every frame of a 5-minute window, and drops records
+repeated across frames. To decode a frame you already have, use
+`cortex2_engine.io.telemetry_binary.decode_accel_frame`.
+
 ## Command line
 
 ```bash
