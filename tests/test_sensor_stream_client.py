@@ -250,6 +250,28 @@ def test_list_follows_next_cursor_across_pages():
     assert calls[2]["params"]["cursor"] == "4"
 
 
+def test_list_stops_when_server_repeats_cursor():
+    session = mock.Mock()
+    session.get.return_value = FakeResponse(payload={"data": [], "next": "same"})
+
+    with pytest.raises(ValueError, match="cursor"):
+        SensorStreamClient(BASE, KEY, session=session).list_frames(PID, SPEC, 0, 1)
+
+
+def test_load_keeps_records_with_nan_values():
+    t0 = 1_790_000_100_000
+    frame = zstd_frame(
+        [(t0, float("nan"), 0.0, 0.0), (t0 + 10, 1.0, 0.0, 0.0)],
+        "f",
+    )
+    server = FakeServer([frame, (dict(frame[0], id="g"), frame[1])])
+
+    df = make_client(server).load(PID, SPEC, None, None)
+
+    assert df["timestamp"].tolist() == [t0, t0 + 10]
+    assert np.isnan(df["x"].iloc[0])
+
+
 def test_list_rejects_unknown_sensor_spec():
     with pytest.raises(ValueError, match="sensor_spec"):
         make_client(FakeServer([])).list_frames(PID, "lamp.gps1m", 0, 10)
@@ -264,11 +286,13 @@ def test_list_raises_on_http_error():
 
 
 def test_participant_id_is_url_quoted():
-    server = FakeServer([])
+    session = mock.Mock()
+    session.get.return_value = FakeResponse(payload={"data": [], "next": None})
 
-    make_client(server).list_frames("a/b c", SPEC, 0, 10)
+    SensorStreamClient(BASE, KEY, session=session).list_frames("a/b c", SPEC, 0, 10)
 
-    assert server.calls[0]["url"] == f"{BASE}/participant/a%2Fb%20c/sensor-stream"
+    url = session.get.call_args.args[0]
+    assert url == f"{BASE}/participant/a%2Fb%20c/sensor-stream"
 
 
 # Downloading.
