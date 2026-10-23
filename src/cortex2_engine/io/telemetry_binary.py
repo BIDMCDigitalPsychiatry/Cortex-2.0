@@ -81,10 +81,63 @@ def openzl_format_version(
     return struct.unpack("<I", blob[:4])[0] - OPENZL_MAGIC_BASE
 
 
+def _check_record_length(
+    length: int,
+    sample_count: int,
+    *,
+    label: str = "Decompressed length",
+) -> None:
+    # Check 2: whole records only.
+    if length % ACCEL_RECORD_SIZE != 0:
+        raise TelemetryDecodeError(
+            f"{label} {length} is not a multiple of "
+            f"{ACCEL_RECORD_SIZE}"
+        )
+
+    # Check 3: record count matches the metadata.
+    decoded_count = length // ACCEL_RECORD_SIZE
+
+    if decoded_count != sample_count:
+        raise TelemetryDecodeError(
+            f"Frame holds {decoded_count} records but "
+            f"sample_count is {sample_count}"
+        )
+
+
 def _decompress_openzl(
     blob: bytes,
+    sample_count: int,
 ) -> bytes:
     zl = _import_openzl()
+
+    # Apply checks 1 to 3 to the frame header first, so a small frame
+    # that declares a huge output is rejected before any allocation.
+    try:
+        info = zl.FrameInfo(blob)
+        declared_outputs = info.num_outputs
+    except Exception as exc:
+        raise TelemetryDecodeError(
+            f"OpenZL frame header is invalid: {exc}"
+        ) from exc
+
+    if declared_outputs != 1:
+        raise TelemetryDecodeError(
+            f"OpenZL frame must have exactly one output, "
+            f"declares {declared_outputs}"
+        )
+
+    try:
+        declared_length = info.output_content_size(0)
+    except Exception as exc:
+        raise TelemetryDecodeError(
+            f"OpenZL frame header has no output size: {exc}"
+        ) from exc
+
+    _check_record_length(
+        declared_length,
+        sample_count,
+        label="Declared decompressed length",
+    )
 
     try:
         outputs = zl.DCtx().decompress(blob)
@@ -111,6 +164,25 @@ def _decompress_zstd(
     bound = sample_count * ACCEL_RECORD_SIZE
 
     try:
+        declared_length = zstandard.get_frame_parameters(blob).content_size
+    except zstandard.ZstdError as exc:
+        raise TelemetryDecodeError(
+            f"zstd frame header is invalid: {exc}"
+        ) from exc
+
+    # python-zstandard allocates a declared content size whatever
+    # max_output_size says, so check it before decompressing.
+    if declared_length not in (
+        zstandard.CONTENTSIZE_UNKNOWN,
+        zstandard.CONTENTSIZE_ERROR,
+    ):
+        _check_record_length(
+            declared_length,
+            sample_count,
+            label="Declared decompressed length",
+        )
+
+    try:
         # The bound lets frames without a content size decode too.
         return zstandard.ZstdDecompressor().decompress(
             blob,
@@ -132,6 +204,10 @@ def decompress_frame(
 ) -> bytes:
     """
     Decompress one frame and apply contract decoder checks 1 to 4.
+
+    Checks 1 to 3 run first on the size the frame header declares,
+    so a frame that would decompress past ``sample_count * 20``
+    bytes is rejected before its output is allocated.
 
     Args:
         blob: The compressed frame bytes.
@@ -160,25 +236,12 @@ def decompress_frame(
         )
 
     if codec == "openzl":
-        raw = _decompress_openzl(blob)
+        raw = _decompress_openzl(blob, sample_count)
     else:
         raw = _decompress_zstd(blob, sample_count)
 
-    # Check 2: whole records only.
-    if len(raw) % ACCEL_RECORD_SIZE != 0:
-        raise TelemetryDecodeError(
-            f"Decompressed length {len(raw)} is not a multiple of "
-            f"{ACCEL_RECORD_SIZE}"
-        )
-
-    # Check 3: record count matches the metadata.
-    decoded_count = len(raw) // ACCEL_RECORD_SIZE
-
-    if decoded_count != sample_count:
-        raise TelemetryDecodeError(
-            f"Frame holds {decoded_count} records but "
-            f"sample_count is {sample_count}"
-        )
+    # Checks 2 and 3 again, on the bytes actually decoded.
+    _check_record_length(len(raw), sample_count)
 
     # Check 4: format version matches the metadata.
     if codec == "openzl":

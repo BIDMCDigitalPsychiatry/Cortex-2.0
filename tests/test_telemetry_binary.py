@@ -311,6 +311,106 @@ def test_check4_runs_before_check5():
         )
 
 
+# Declared-size bound: reject a frame before decompressing it.
+
+
+class _DecompressSpy:
+    """Stands in for a codec decompressor and records every call."""
+
+    calls = []
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def decompress(self, *args, **kwargs):
+        type(self).calls.append((args, kwargs))
+        raise AssertionError("the decoder decompressed a rejected frame")
+
+
+@pytest.fixture
+def spy_decompressors(monkeypatch):
+    zl = pytest.importorskip("openzl.ext")
+    zstandard = pytest.importorskip("zstandard")
+    _DecompressSpy.calls = []
+    monkeypatch.setattr(zl, "DCtx", _DecompressSpy)
+    monkeypatch.setattr(zstandard, "ZstdDecompressor", _DecompressSpy)
+    return _DecompressSpy.calls
+
+
+# 2 MB of one byte compresses to a few hundred bytes.
+_BOMB_RAW = b"\x01" * (ACCEL_DTYPE.itemsize * 100_000)
+
+
+@pytest.mark.parametrize("codec", ["openzl", "zstd"])
+def test_declared_size_over_sample_count_rejected_without_decompressing(
+    codec, spy_decompressors
+):
+    blob = (
+        openzl_compress([_BOMB_RAW])
+        if codec == "openzl"
+        else zstd_compress(_BOMB_RAW)
+    )
+    assert len(blob) < 10_000
+
+    with pytest.raises(TelemetryDecodeError, match="sample_count"):
+        decompress_frame(
+            blob,
+            codec,
+            sample_count=1,
+            codec_format_version=24 if codec == "openzl" else 0,
+        )
+
+    assert spy_decompressors == []
+
+
+@pytest.mark.parametrize("codec", ["openzl", "zstd"])
+def test_declared_size_not_multiple_of_20_rejected_without_decompressing(
+    codec, spy_decompressors
+):
+    raw = FRAME_BIN[:30]
+    blob = openzl_compress([raw]) if codec == "openzl" else zstd_compress(raw)
+
+    with pytest.raises(TelemetryDecodeError, match="multiple of 20"):
+        decompress_frame(
+            blob,
+            codec,
+            sample_count=1,
+            codec_format_version=24 if codec == "openzl" else 0,
+        )
+
+    assert spy_decompressors == []
+
+
+def test_declared_two_outputs_rejected_without_decompressing(spy_decompressors):
+    blob = openzl_compress([FRAME_BIN, FRAME_BIN])
+
+    with pytest.raises(TelemetryDecodeError, match="one output"):
+        decompress_frame(
+            blob,
+            "openzl",
+            sample_count=500,
+            codec_format_version=24,
+        )
+
+    assert spy_decompressors == []
+
+
+def test_decode_accel_frame_rejects_compression_bomb_before_decompressing(
+    spy_decompressors,
+):
+    blob = zstd_compress(_BOMB_RAW)
+
+    with pytest.raises(TelemetryDecodeError, match="sample_count"):
+        decode_accel_frame(
+            blob,
+            codec="zstd",
+            sample_count=1,
+            codec_format_version=0,
+        )
+
+    assert spy_decompressors == []
+
+
 # Corrupt input and bad arguments.
 
 
