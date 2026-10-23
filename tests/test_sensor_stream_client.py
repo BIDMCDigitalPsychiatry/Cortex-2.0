@@ -459,6 +459,25 @@ def test_load_keeps_order_of_equal_timestamps_stable():
     assert df["x"].tolist() == [1.0, 2.0, 3.0]
 
 
+@pytest.mark.parametrize("ascending", [True, False])
+def test_load_keeps_frame_order_of_many_equal_timestamps(ascending):
+    # 200 rows over 7 timestamps: numpy's quicksort is unstable at this
+    # size, so only a stable sort keeps x in frame order within each tie.
+    t0 = 1_790_000_100_000
+    rows = sorted(
+        [(t0 + (i % 7), float(i), 0.0, 0.0) for i in range(200)],
+        key=lambda r: r[0],
+    )
+    server = FakeServer([zstd_frame(rows, "f")])
+
+    df = make_client(server).load(PID, SPEC, None, None, ascending=ascending)
+
+    timestamps = sorted({r[0] for r in rows}, reverse=not ascending)
+    expected_x = [r[1] for t in timestamps for r in rows if r[0] == t]
+    assert df["timestamp"].is_monotonic_increasing == ascending
+    assert df["x"].tolist() == expected_x
+
+
 def test_load_applies_half_open_interval():
     records = records_frame()
     start = int(records["timestamp"].iloc[10])
