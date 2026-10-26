@@ -9,7 +9,7 @@ DAY_MS = 86_400_000
 
 INVENTORY_PATH = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "inventory/source_files/gps.parquet"
 )
 
@@ -22,7 +22,7 @@ DAILY_ROOT = Path(
 
 OUT_DIR = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "validation/feature_reliability"
 )
 

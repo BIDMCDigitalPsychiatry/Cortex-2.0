@@ -1,0 +1,22 @@
+name: source_intervals
+version: '1.0'
+description: 'Declared or inferred temporal boundaries of source data supplied to
+  Cortex 2.0. Source boundaries are distinct from sensor observability.
+
+  '
+required:
+  study_id: string
+  source_participant_id: string
+  source_platform: string
+  boundary_source: string
+optional:
+  stream: string
+  source_start_ms: int64
+  source_start_utc: datetime_utc
+  source_end_ms: int64
+  source_end_utc: datetime_utc
+  start_inclusive: bool
+  end_inclusive: bool
+  provenance_file: string
+  participant_id: string
+  episode_id: string

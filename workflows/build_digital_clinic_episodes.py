@@ -2,10 +2,10 @@ from pathlib import Path
 
 import pandas as pd
 
-from raphe.canonical.episodes import (
+from cortex2_engine.canonical.episodes import (
     build_episodes_from_windows,
 )
-from raphe.canonical.validation import (
+from cortex2_engine.canonical.validation import (
     validate_canonical,
 )
 
@@ -16,7 +16,7 @@ WINDOWS = Path(
 )
 
 OUTPUT = Path(
-    "../raphe_outputs/digital_clinic/"
+    "../cortex2_outputs/digital_clinic/"
     "inventory/episodes.parquet"
 )
 

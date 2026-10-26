@@ -5,7 +5,7 @@ import pandas as pd
 
 GPS_PATH = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "inventory/source_files/gps.parquet"
 )
 

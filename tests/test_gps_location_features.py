@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from raphe.features.gps_location_features import (
+from cortex2_engine.features.gps_location_features import (
     compute_daily_location_features,
 )
 

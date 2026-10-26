@@ -2,19 +2,19 @@ from pathlib import Path
 
 import pandas as pd
 
-from raphe.adapters.mindlamp import (
+from cortex2_engine.adapters.mindlamp import (
     MindLAMPAdapter,
 )
-from raphe.canonical.reader import (
+from cortex2_engine.canonical.reader import (
     EpisodeReader,
 )
-from raphe.quality.hourly import (
+from cortex2_engine.quality.hourly import (
     episode_hourly_quality,
 )
 
 
 ROOT = Path(
-    "../raphe_outputs/digital_clinic"
+    "../cortex2_outputs/digital_clinic"
 )
 
 episodes = pd.read_parquet(

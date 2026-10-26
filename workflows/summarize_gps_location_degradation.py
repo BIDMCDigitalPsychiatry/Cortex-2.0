@@ -1,4 +1,4 @@
-"""Summarize RAPHE GPS location-feature degradation experiments.
+"""Summarize Cortex 2.0 GPS location-feature degradation experiments.
 
 Combines all controlled-missingness runs and produces:
 
@@ -20,7 +20,7 @@ import pandas as pd
 
 ROOT = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability"
 )
@@ -195,7 +195,7 @@ files = sorted(
 
 
 print("=" * 80)
-print("RAPHE GPS DEGRADATION SUMMARY")
+print("Cortex 2.0 GPS DEGRADATION SUMMARY")
 print("=" * 80)
 
 print(

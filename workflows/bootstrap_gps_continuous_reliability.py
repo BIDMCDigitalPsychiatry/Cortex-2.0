@@ -1,4 +1,4 @@
-"""Participant-cluster bootstrap for RAPHE GPS reliability results.
+"""Participant-cluster bootstrap for Cortex 2.0 GPS reliability results.
 
 Bootstraps participants, not individual days/conditions.
 
@@ -22,7 +22,7 @@ import pandas as pd
 
 ROOT = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability"
 )
@@ -253,7 +253,7 @@ bootstrap_indices = rng.integers(
 
 
 print("=" * 80)
-print("RAPHE GPS PARTICIPANT-CLUSTER BOOTSTRAP")
+print("Cortex 2.0 GPS PARTICIPANT-CLUSTER BOOTSTRAP")
 print("=" * 80)
 
 print(

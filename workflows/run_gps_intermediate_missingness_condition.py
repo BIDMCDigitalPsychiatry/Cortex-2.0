@@ -1,4 +1,4 @@
-"""Run one RAPHE intermediate GPS missingness-geometry condition.
+"""Run one Cortex 2.0 intermediate GPS missingness-geometry condition.
 
 This experiment extends the frozen held-out GPS degradation validation with
 controlled intermediate temporal missingness geometries.
@@ -30,28 +30,28 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from raphe.features.gps_degradation import (
+from cortex2_engine.features.gps_degradation import (
     apply_missing_bin_mask_to_points,
 )
-from raphe.features.missingness_simulation import (
+from cortex2_engine.features.missingness_simulation import (
     make_balanced_k_run_missing_bin_mask,
 )
-from raphe.features.missingness_structure import (
+from cortex2_engine.features.missingness_structure import (
     compute_missingness_structure,
 )
-from raphe.features.gps_intervals import (
+from cortex2_engine.features.gps_intervals import (
     build_gps_intervals,
 )
-from raphe.features.gps_spatial_semantics import (
+from cortex2_engine.features.gps_spatial_semantics import (
     add_gps_spatial_semantics,
 )
-from raphe.features.gps_anchor_episodes import (
+from cortex2_engine.features.gps_anchor_episodes import (
     build_anchor_compatible_location_episodes,
 )
-from raphe.features.gps_place_candidates import (
+from cortex2_engine.features.gps_place_candidates import (
     build_place_candidates,
 )
-from raphe.features.gps_location_features import (
+from cortex2_engine.features.gps_location_features import (
     compute_daily_location_features,
 )
 
@@ -92,7 +92,7 @@ ALLOWED_REPLICATES = set(
 
 ROOT = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability"
 )
@@ -231,7 +231,7 @@ OUT_PATH = (
 
 
 print("=" * 80)
-print("RAPHE INTERMEDIATE GPS MISSINGNESS CONDITION")
+print("Cortex 2.0 INTERMEDIATE GPS MISSINGNESS CONDITION")
 print("=" * 80)
 
 print(

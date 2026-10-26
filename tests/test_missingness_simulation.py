@@ -1,11 +1,11 @@
 import numpy as np
 import pytest
 
-from raphe.features.missingness_simulation import (
+from cortex2_engine.features.missingness_simulation import (
     make_balanced_k_run_missing_bin_mask,
 )
 
-from raphe.features.missingness_structure import (
+from cortex2_engine.features.missingness_structure import (
     compute_missingness_structure,
 )
 

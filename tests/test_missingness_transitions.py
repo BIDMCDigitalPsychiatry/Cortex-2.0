@@ -1,6 +1,6 @@
 import pandas as pd
 
-from raphe.missingness.transitions import (
+from cortex2_engine.missingness.transitions import (
     add_hourly_missingness_transitions,
 )
 

@@ -9,7 +9,7 @@ import LAMP.rest
 
 
 OS_MAP = Path(
-    "../raphe_outputs/digital_clinic/"
+    "../cortex2_outputs/digital_clinic/"
     "inventory/"
     "risk_episode_ios_sensorkit_evidence_timeaware.csv"
 )

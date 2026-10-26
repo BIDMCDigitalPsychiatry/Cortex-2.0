@@ -1,7 +1,7 @@
-"""Audit true 60-second RAPHE GPS observability for held-out candidates.
+"""Audit true 60-second Cortex 2.0 GPS observability for held-out candidates.
 
 The existing 10-minute daily DQ was used only to prefilter candidate days.
-This workflow goes back to raw GPS timestamps and computes RAPHE temporal
+This workflow goes back to raw GPS timestamps and computes Cortex 2.0 temporal
 observability using the already-tested 60-second continuity policy.
 
 No feature values are computed here.
@@ -12,7 +12,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from raphe.features.gps_observability import (
+from cortex2_engine.features.gps_observability import (
     compute_gps_temporal_observability,
 )
 
@@ -23,7 +23,7 @@ DAY_MS = 86_400_000
 
 ROOT = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability"
 )
@@ -35,7 +35,7 @@ CANDIDATE_PATH = (
 
 INVENTORY_PATH = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "inventory/source_files/gps.parquet"
 )
 
@@ -70,7 +70,7 @@ candidates["date"] = (
 
 
 print("=" * 80)
-print("RAPHE HELD-OUT GPS 60-SECOND OBSERVABILITY AUDIT")
+print("Cortex 2.0 HELD-OUT GPS 60-SECOND OBSERVABILITY AUDIT")
 print("=" * 80)
 
 print(

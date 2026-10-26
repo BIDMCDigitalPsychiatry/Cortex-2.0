@@ -3,14 +3,14 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "raphe"
+name = "cortex2-engine"
 version = "0.1.0"
 description = "Reliability-Aware Personalized Health Phenotyping Engine"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [
-    {name = "RAPHE Contributors"}
+    {name = "Cortex 2.0 Contributors"}
 ]
 dependencies = [
     "numpy>=1.24",
@@ -28,7 +28,7 @@ dev = [
 ]
 
 [project.scripts]
-raphe = "raphe.cli:app"
+cortex2 = "cortex2_engine.cli:app"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -40,4 +40,4 @@ testpaths = ["tests"]
 line-length = 88
 
 [tool.setuptools.package-data]
-raphe = ["schema_specs/*.yaml"]
+cortex2_engine = ["schema_specs/*.yaml"]

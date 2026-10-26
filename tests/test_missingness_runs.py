@@ -1,6 +1,6 @@
 import pandas as pd
 
-from raphe.missingness.runs import (
+from cortex2_engine.missingness.runs import (
     assign_contiguous_runs,
 )
 

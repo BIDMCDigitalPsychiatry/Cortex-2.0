@@ -2,18 +2,18 @@ from pathlib import Path
 
 import pandas as pd
 
-from raphe.missingness.context import (
+from cortex2_engine.missingness.context import (
     classify_daily_gap_context,
 )
 
 
 INPUT = Path(
-    "../raphe_outputs/digital_clinic/"
+    "../cortex2_outputs/digital_clinic/"
     "quality/daily_reliability_context.parquet"
 )
 
 OUTPUT = Path(
-    "../raphe_outputs/digital_clinic/"
+    "../cortex2_outputs/digital_clinic/"
     "quality/daily_missingness_context.parquet"
 )
 

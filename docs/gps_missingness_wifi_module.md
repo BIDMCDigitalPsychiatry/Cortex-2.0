@@ -1,7 +1,7 @@
 # GPS Missingness and Wi-Fi Context Analysis
 
 **Status:** Complete  
-**RAPHE stage:** Observability / missingness characterization  
+**Cortex 2.0 stage:** Observability / missingness characterization  
 **Study instance:** Digital Clinic  
 **Completed:** October 2026
 
@@ -359,6 +359,6 @@ Supporting LAMP analytics inspection workflows:
 
 ## Decision
 
-This missingness-mechanism branch is considered complete for the current RAPHE stage.
+This missingness-mechanism branch is considered complete for the current Cortex 2.0 stage.
 
-Further analyses should only be added if required for a specific manuscript question or external validation. The next RAPHE work should proceed to the next framework component rather than further elaborating the Wi-Fi mechanism.
+Further analyses should only be added if required for a specific manuscript question or external validation. The next Cortex 2.0 work should proceed to the next framework component rather than further elaborating the Wi-Fi mechanism.

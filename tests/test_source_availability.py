@@ -1,4 +1,4 @@
-from raphe.quality.source_availability import (
+from cortex2_engine.quality.source_availability import (
     SourceBoundaryStatus,
     classify_source_interval,
 )

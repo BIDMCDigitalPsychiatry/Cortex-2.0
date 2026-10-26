@@ -18,7 +18,7 @@ import pandas as pd
 
 ROOT = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability"
 )
@@ -270,7 +270,7 @@ variability.to_csv(
 
 
 print("=" * 80)
-print("RAPHE GPS HOLDOUT NATURAL FEATURE VARIABILITY")
+print("Cortex 2.0 GPS HOLDOUT NATURAL FEATURE VARIABILITY")
 print("=" * 80)
 
 print(

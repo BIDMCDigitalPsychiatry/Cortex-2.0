@@ -1,4 +1,4 @@
-"""Evaluate frozen RAPHE GPS reliability models on the independent holdout.
+"""Evaluate frozen Cortex 2.0 GPS reliability models on the independent holdout.
 
 IMPORTANT
 ---------
@@ -31,7 +31,7 @@ import hashlib
 import numpy as np
 import pandas as pd
 
-from raphe.features.gps_degradation import (
+from cortex2_engine.features.gps_degradation import (
     make_missing_bin_mask,
 )
 
@@ -42,7 +42,7 @@ from raphe.features.gps_degradation import (
 
 ROOT = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability"
 )

@@ -26,11 +26,11 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from raphe.features.gps_degradation import (
+from cortex2_engine.features.gps_degradation import (
     make_missing_bin_mask,
 )
 
-from raphe.features.missingness_structure import (
+from cortex2_engine.features.missingness_structure import (
     compute_missingness_structure,
 )
 
@@ -53,7 +53,7 @@ EXPECTED_CONDITIONS = 40
 
 ROOT = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability"
 )
@@ -186,7 +186,7 @@ locked_days["date"] = (
 
 
 print("=" * 80)
-print("RAPHE GPS VALIDATION MISSINGNESS-STRUCTURE RECONSTRUCTION")
+print("Cortex 2.0 GPS VALIDATION MISSINGNESS-STRUCTURE RECONSTRUCTION")
 print("=" * 80)
 
 print(

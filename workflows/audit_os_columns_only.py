@@ -29,7 +29,7 @@ CANDIDATE = re.compile(
 SKIP_DIRS = {
     ".git",
     "__pycache__",
-    "raphe_outputs",
+    "cortex2_outputs",
 }
 
 results = []
@@ -248,7 +248,7 @@ else:
     )
 
     save = Path(
-        "../raphe_outputs/digital_clinic/"
+        "../cortex2_outputs/digital_clinic/"
         "inventory/os_column_candidates.csv"
     )
 

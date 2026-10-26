@@ -12,18 +12,18 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from raphe.features.gps_anchor_episodes import (
+from cortex2_engine.features.gps_anchor_episodes import (
     build_anchor_compatible_location_episodes,
 )
 
-from raphe.features.gps_spatial_semantics import (
+from cortex2_engine.features.gps_spatial_semantics import (
     add_gps_spatial_semantics,
 )
 
 
 EDGE_PATH = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability/"
     "gps_reference_supported_edges.parquet"
@@ -62,7 +62,7 @@ edges = add_gps_spatial_semantics(
 
 
 print("=" * 80)
-print("RAPHE FIXED-ANCHOR LOCATION EPISODE AUDIT")
+print("Cortex 2.0 FIXED-ANCHOR LOCATION EPISODE AUDIT")
 print("=" * 80)
 
 print(

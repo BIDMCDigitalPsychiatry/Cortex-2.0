@@ -1,9 +1,9 @@
-"""Audit empirical GPS sampling cadence for RAPHE.
+"""Audit empirical GPS sampling cadence for Cortex 2.0.
 
 This workflow does NOT use Cortex feature functions.
 
 It characterizes the raw temporal structure of GPS observations and evaluates
-RAPHE temporal observability across a sensitivity grid of continuity
+Cortex 2.0 temporal observability across a sensitivity grid of continuity
 tolerances.
 
 The continuity tolerances are NOT proposed reliability thresholds.
@@ -14,7 +14,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from raphe.features.gps_observability import (
+from cortex2_engine.features.gps_observability import (
     compute_gps_temporal_observability,
 )
 
@@ -23,7 +23,7 @@ DAY_MS = 86_400_000
 
 INVENTORY_PATH = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "inventory/source_files/gps.parquet"
 )
 
@@ -36,7 +36,7 @@ DAILY_ROOT = Path(
 
 OUT_DIR = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability"
 )
@@ -175,7 +175,7 @@ inventory = inventory[
 
 
 print("=" * 80)
-print("RAPHE GPS SAMPLING-CADENCE AUDIT")
+print("Cortex 2.0 GPS SAMPLING-CADENCE AUDIT")
 print("=" * 80)
 
 print(

@@ -8,20 +8,20 @@ ROOT = Path("/shared/Digital Clinic")
 
 RISK_PATH = (
     ROOT
-    / "raphe_outputs/digital_clinic/"
+    / "cortex2_outputs/digital_clinic/"
     "quality/hourly_missingness/"
     "gps_onset_contextual_risk_set.parquet"
 )
 
 EPISODES_PATH = (
     ROOT
-    / "raphe_outputs/digital_clinic/"
+    / "cortex2_outputs/digital_clinic/"
     "inventory/episodes.parquet"
 )
 
 OUT_PATH = (
     ROOT
-    / "raphe_outputs/digital_clinic/"
+    / "cortex2_outputs/digital_clinic/"
     "inventory/"
     "risk_episode_ios_sensorkit_evidence_timeaware.csv"
 )

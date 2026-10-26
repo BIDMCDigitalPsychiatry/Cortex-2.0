@@ -1,11 +1,11 @@
 import pandas as pd
 import pytest
 
-from raphe.adapters.mindlamp import MindLAMPAdapter
-from raphe.canonical.episodes import (
+from cortex2_engine.adapters.mindlamp import MindLAMPAdapter
+from cortex2_engine.canonical.episodes import (
     build_episodes_from_windows,
 )
-from raphe.canonical.reader import EpisodeReader
+from cortex2_engine.canonical.reader import EpisodeReader
 
 
 def make_source(tmp_path):

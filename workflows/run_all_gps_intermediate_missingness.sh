@@ -4,7 +4,7 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=8G
 #SBATCH --time=12:00:00
-#SBATCH --job-name=raphe_gps_intermediate
+#SBATCH --job-name=cortex2_gps_intermediate
 #SBATCH --output=gps_intermediate_%j.out
 #SBATCH --error=gps_intermediate_%j.err
 
@@ -13,9 +13,9 @@ set -euo pipefail
 source /cm/shared/apps/miniforge3/26.3.2-3/etc/profile.d/conda.sh
 conda activate /home/akargara/envs/socialmedia
 
-cd "/shared/Digital Clinic/RAPHE"
+cd "/shared/Digital Clinic/Cortex 2.0"
 
-RUN_DIR="/shared/Digital Clinic/raphe_outputs/digital_clinic/feature_reliability/gps_observability/intermediate_missingness_runs"
+RUN_DIR="/shared/Digital Clinic/cortex2_outputs/digital_clinic/feature_reliability/gps_observability/intermediate_missingness_runs"
 
 mkdir -p "$RUN_DIR"
 

@@ -2,16 +2,16 @@ from pathlib import Path
 
 import pandas as pd
 
-from raphe.quality.source_availability import (
+from cortex2_engine.quality.source_availability import (
     resolve_source_boundary,
 )
-from raphe.quality.stream_evidence import (
+from cortex2_engine.quality.stream_evidence import (
     classify_stream_evidence_context,
 )
 
 
 ROOT = Path(
-    "../raphe_outputs/digital_clinic"
+    "../cortex2_outputs/digital_clinic"
 )
 
 EPISODES = ROOT / "inventory/episodes.parquet"

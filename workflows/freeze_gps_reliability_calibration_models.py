@@ -1,4 +1,4 @@
-"""Freeze RAPHE GPS reliability calibration models.
+"""Freeze Cortex 2.0 GPS reliability calibration models.
 
 Fits the exact models previously evaluated by LOPO CV using all 16
 calibration participants.
@@ -39,7 +39,7 @@ import pandas as pd
 
 ROOT = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability"
 )
@@ -386,7 +386,7 @@ DESIGN_OUT.write_text(
 # ============================================================
 
 print("=" * 80)
-print("RAPHE GPS RELIABILITY MODELS — FROZEN")
+print("Cortex 2.0 GPS RELIABILITY MODELS — FROZEN")
 print("=" * 80)
 
 print(

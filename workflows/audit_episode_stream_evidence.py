@@ -2,21 +2,21 @@ from pathlib import Path
 
 import pandas as pd
 
-from raphe.io.source_index import SourceFileIndex
+from cortex2_engine.io.source_index import SourceFileIndex
 
 
 EPISODES_PATH = Path(
-    "../raphe_outputs/digital_clinic/"
+    "../cortex2_outputs/digital_clinic/"
     "inventory/episodes.parquet"
 )
 
 MANIFEST_DIR = Path(
-    "../raphe_outputs/digital_clinic/"
+    "../cortex2_outputs/digital_clinic/"
     "inventory/source_files"
 )
 
 OUTPUT_PATH = Path(
-    "../raphe_outputs/digital_clinic/"
+    "../cortex2_outputs/digital_clinic/"
     "quality/episode_stream_evidence.csv"
 )
 

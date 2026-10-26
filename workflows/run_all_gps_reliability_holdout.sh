@@ -4,7 +4,7 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=8G
 #SBATCH --time=24:00:00
-#SBATCH --job-name=raphe_gps_holdout
+#SBATCH --job-name=cortex2_gps_holdout
 #SBATCH --output=gps_reliability_holdout_%j.out
 #SBATCH --error=gps_reliability_holdout_%j.err
 
@@ -14,10 +14,10 @@ set -euo pipefail
 source /cm/shared/apps/miniforge3/26.3.2-3/etc/profile.d/conda.sh
 conda activate /home/akargara/envs/socialmedia
 
-cd "/shared/Digital Clinic/RAPHE"
+cd "/shared/Digital Clinic/Cortex 2.0"
 
 
-ROOT="/shared/Digital Clinic/raphe_outputs/digital_clinic/feature_reliability/gps_observability"
+ROOT="/shared/Digital Clinic/cortex2_outputs/digital_clinic/feature_reliability/gps_observability"
 
 EXTREME_DIR="${ROOT}/reliability_holdout_degradation_runs"
 INTERMEDIATE_DIR="${ROOT}/reliability_holdout_intermediate_missingness_runs"
@@ -232,7 +232,7 @@ import pandas as pd
 
 root = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability"
 )

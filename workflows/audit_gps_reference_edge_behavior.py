@@ -1,4 +1,4 @@
-"""Audit RAPHE GPS edge behavior on well-observed benchmark days.
+"""Audit Cortex 2.0 GPS edge behavior on well-observed benchmark days.
 
 No Cortex feature functions are used.
 
@@ -12,7 +12,7 @@ The purpose is to characterize empirical distributions of:
 - implied speed
 - reported positional accuracy
 
-before RAPHE defines stationary/movement semantics.
+before Cortex 2.0 defines stationary/movement semantics.
 """
 
 from pathlib import Path
@@ -20,7 +20,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from raphe.features.gps_intervals import (
+from cortex2_engine.features.gps_intervals import (
     build_gps_intervals,
 )
 
@@ -31,7 +31,7 @@ MAX_GAP_MS = 60_000
 
 INVENTORY_PATH = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "inventory/source_files/gps.parquet"
 )
 
@@ -44,7 +44,7 @@ DAILY_ROOT = Path(
 
 OUT_DIR = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability"
 )
@@ -147,7 +147,7 @@ reference["timestamp"] = (
 
 
 print("=" * 80)
-print("RAPHE GPS REFERENCE-EDGE AUDIT")
+print("Cortex 2.0 GPS REFERENCE-EDGE AUDIT")
 print("=" * 80)
 
 print(
@@ -709,7 +709,7 @@ participant_summary.to_csv(
 # ============================================================
 
 # These are descriptive bins only.
-# They are NOT RAPHE movement thresholds.
+# They are NOT Cortex 2.0 movement thresholds.
 
 speed_bins = [
     -np.inf,

@@ -3,14 +3,14 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from raphe.missingness.runs import (
+from cortex2_engine.missingness.runs import (
     assign_contiguous_runs,
     EXCLUDED_PATTERNS,
 )
 
 
 ROOT = Path(
-    "../raphe_outputs/digital_clinic/"
+    "../cortex2_outputs/digital_clinic/"
     "quality/hourly_missingness"
 )
 

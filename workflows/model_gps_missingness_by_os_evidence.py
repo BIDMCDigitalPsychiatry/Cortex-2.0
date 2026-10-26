@@ -6,7 +6,7 @@ import statsmodels.api as sm
 
 
 ROOT = Path(
-    "../raphe_outputs/digital_clinic"
+    "../cortex2_outputs/digital_clinic"
 )
 
 RISK_PATH = (

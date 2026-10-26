@@ -5,7 +5,7 @@ import pandas as pd
 
 
 EPISODES_PATH = Path(
-    "../raphe_outputs/digital_clinic/"
+    "../cortex2_outputs/digital_clinic/"
     "inventory/episodes.parquet"
 )
 
@@ -14,7 +14,7 @@ METADATA_PATH = Path(
 )
 
 OUTPUT_PATH = Path(
-    "../raphe_outputs/digital_clinic/"
+    "../cortex2_outputs/digital_clinic/"
     "inventory/source_intervals.parquet"
 )
 
@@ -149,7 +149,7 @@ for ep in episodes.itertuples(
         {}
     )
 
-    for source_name, raphe_stream in (
+    for source_name, cortex2_stream in (
         STREAM_MAP.items()
     ):
         sensor = sensors.get(
@@ -190,7 +190,7 @@ for ep in episodes.itertuples(
                 SOURCE_PLATFORM,
 
             "stream":
-                raphe_stream,
+                cortex2_stream,
 
             "source_start_ms":
                 None,

@@ -2,7 +2,7 @@
 
 Purpose
 -------
-RAPHE should not ask only:
+Cortex 2.0 should not ask only:
 
     How much does a feature change when data are missing?
 
@@ -39,7 +39,7 @@ import pandas as pd
 
 ROOT = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability"
 )
@@ -240,7 +240,7 @@ degradation[
 
 
 print("=" * 80)
-print("RAPHE GPS NATURAL VARIABILITY + NORMALIZED RELIABILITY")
+print("Cortex 2.0 GPS NATURAL VARIABILITY + NORMALIZED RELIABILITY")
 print("=" * 80)
 
 print(

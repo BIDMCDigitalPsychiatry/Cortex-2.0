@@ -1,4 +1,4 @@
-"""Run one held-out RAPHE GPS reliability-validation condition.
+"""Run one held-out Cortex 2.0 GPS reliability-validation condition.
 
 The validation design is frozen:
 - 16 held-out participants
@@ -26,17 +26,17 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from raphe.features.gps_degradation import (
+from cortex2_engine.features.gps_degradation import (
     apply_missing_bin_mask_to_points,
     make_missing_bin_mask,
 )
-from raphe.features.gps_intervals import build_gps_intervals
-from raphe.features.gps_spatial_semantics import add_gps_spatial_semantics
-from raphe.features.gps_anchor_episodes import (
+from cortex2_engine.features.gps_intervals import build_gps_intervals
+from cortex2_engine.features.gps_spatial_semantics import add_gps_spatial_semantics
+from cortex2_engine.features.gps_anchor_episodes import (
     build_anchor_compatible_location_episodes,
 )
-from raphe.features.gps_place_candidates import build_place_candidates
-from raphe.features.gps_location_features import (
+from cortex2_engine.features.gps_place_candidates import build_place_candidates
+from cortex2_engine.features.gps_location_features import (
     compute_daily_location_features,
 )
 
@@ -62,7 +62,7 @@ ALLOWED_PATTERNS = {
 
 ROOT = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability"
 )
@@ -188,7 +188,7 @@ OUT_PATH = (
 
 
 print("=" * 80)
-print("RAPHE HELD-OUT GPS DEGRADATION VALIDATION")
+print("Cortex 2.0 HELD-OUT GPS DEGRADATION VALIDATION")
 print("=" * 80)
 
 print(

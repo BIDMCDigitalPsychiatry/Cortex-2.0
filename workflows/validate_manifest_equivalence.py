@@ -4,19 +4,19 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from raphe.adapters.mindlamp import MindLAMPAdapter
+from cortex2_engine.adapters.mindlamp import MindLAMPAdapter
 
 
 PARTICIPANT_ID = "CHO370"
 
 EPISODES = Path(
-    "../raphe_outputs/digital_clinic/inventory/episodes.parquet"
+    "../cortex2_outputs/digital_clinic/inventory/episodes.parquet"
 )
 
 PASSIVE_ROOT = Path("../passive")
 
 MANIFEST_DIR = Path(
-    "../raphe_outputs/digital_clinic/inventory/source_files"
+    "../cortex2_outputs/digital_clinic/inventory/source_files"
 )
 
 

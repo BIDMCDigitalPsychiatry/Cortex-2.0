@@ -22,11 +22,11 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from raphe.features.missingness_simulation import (
+from cortex2_engine.features.missingness_simulation import (
     make_balanced_k_run_missing_bin_mask,
 )
 
-from raphe.features.missingness_structure import (
+from cortex2_engine.features.missingness_structure import (
     compute_missingness_structure,
 )
 
@@ -56,7 +56,7 @@ REPLICATES = range(
 
 ROOT = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability"
 )
@@ -532,7 +532,7 @@ combined.to_csv(
 
 
 print("=" * 80)
-print("RAPHE INTERMEDIATE MISSINGNESS DESIGN AUDIT")
+print("Cortex 2.0 INTERMEDIATE MISSINGNESS DESIGN AUDIT")
 print("=" * 80)
 
 print(

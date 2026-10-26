@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=8G
 #SBATCH --time=12:00:00
-#SBATCH --job-name=raphe_gps_validation
+#SBATCH --job-name=cortex2_gps_validation
 #SBATCH --output=gps_validation_%j.out
 #SBATCH --error=gps_validation_%j.err
 
@@ -13,9 +13,9 @@ set -e
 
 source /cm/shared/apps/miniforge3/26.3.2-3/etc/profile.d/conda.sh
 conda activate /home/akargara/envs/socialmedia
-cd "/shared/Digital Clinic/RAPHE"
+cd "/shared/Digital Clinic/Cortex 2.0"
 
-RUN_DIR="/shared/Digital Clinic/raphe_outputs/digital_clinic/feature_reliability/gps_observability/validation_degradation_runs"
+RUN_DIR="/shared/Digital Clinic/cortex2_outputs/digital_clinic/feature_reliability/gps_observability/validation_degradation_runs"
 
 mkdir -p "$RUN_DIR"
 

@@ -3,23 +3,23 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from raphe.adapters.mindlamp import MindLAMPAdapter
-from raphe.canonical.reader import EpisodeReader
-from raphe.quality.episode import episode_daily_quality
+from cortex2_engine.adapters.mindlamp import MindLAMPAdapter
+from cortex2_engine.canonical.reader import EpisodeReader
+from cortex2_engine.quality.episode import episode_daily_quality
 
 
 PARTICIPANT_ID = "CHO370"
 
 EPISODES = Path(
-    "../raphe_outputs/digital_clinic/inventory/episodes.parquet"
+    "../cortex2_outputs/digital_clinic/inventory/episodes.parquet"
 )
 
 SOURCE_INTERVALS = Path(
-    "../raphe_outputs/digital_clinic/inventory/source_intervals.parquet"
+    "../cortex2_outputs/digital_clinic/inventory/source_intervals.parquet"
 )
 
 SOURCE_MANIFESTS = Path(
-    "../raphe_outputs/digital_clinic/inventory/source_files"
+    "../cortex2_outputs/digital_clinic/inventory/source_files"
 )
 
 PASSIVE_ROOT = Path("../passive")
@@ -93,7 +93,7 @@ for stream, cortex_column in [
     print(stream.upper())
     print("=" * 70)
 
-    raphe = episode_daily_quality(
+    cortex2 = episode_daily_quality(
         reader,
         source_intervals,
         episode_id=ep["episode_id"],
@@ -101,7 +101,7 @@ for stream, cortex_column in [
         chunksize=250_000,
     )
 
-    merged = raphe.merge(
+    merged = cortex2.merge(
         benchmark[
             [
                 "date",

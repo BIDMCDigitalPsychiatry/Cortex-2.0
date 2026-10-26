@@ -1,4 +1,4 @@
-from raphe.quality.reliability_context import (
+from cortex2_engine.quality.reliability_context import (
     DailyObservabilityState,
     classify_daily_observability,
 )

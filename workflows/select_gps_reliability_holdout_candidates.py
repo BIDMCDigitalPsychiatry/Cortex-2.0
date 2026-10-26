@@ -1,4 +1,4 @@
-"""Select a fresh participant holdout for RAPHE GPS reliability validation.
+"""Select a fresh participant holdout for Cortex 2.0 GPS reliability validation.
 
 Important design rule
 ---------------------
@@ -33,13 +33,13 @@ import pandas as pd
 
 QUALITY_PATH = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "quality/gps_daily.parquet"
 )
 
 ROOT = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability"
 )
@@ -73,7 +73,7 @@ PARTICIPANTS_PER_QUARTILE = 16
 CANDIDATE_DAYS_PER_PARTICIPANT = 14
 
 SELECTION_NAMESPACE = (
-    "raphe_gps_reliability_holdout_v1"
+    "cortex2_gps_reliability_holdout_v1"
 )
 
 EXPECTED_QUARTILES = [
@@ -517,7 +517,7 @@ candidate_days.to_parquet(
 # ============================================================
 
 print("=" * 80)
-print("RAPHE GPS INDEPENDENT RELIABILITY-HOLDOUT CANDIDATES")
+print("Cortex 2.0 GPS INDEPENDENT RELIABILITY-HOLDOUT CANDIDATES")
 print("=" * 80)
 
 print(

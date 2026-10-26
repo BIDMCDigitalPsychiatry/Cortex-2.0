@@ -6,7 +6,7 @@ import pandas as pd
 ROOT = Path("/shared/Digital Clinic")
 
 OUT = Path(
-    "../raphe_outputs/digital_clinic/"
+    "../cortex2_outputs/digital_clinic/"
     "inventory/os_metadata_search.csv"
 )
 
@@ -24,9 +24,9 @@ PATTERN = re.compile(
 SKIP_DIRS = {
     ".git",
     "__pycache__",
-    "raphe_outputs",
+    "cortex2_outputs",
     "passive",
-    "RAPHE",
+    "Cortex 2.0",
 }
 
 MAX_SIZE = 20 * 1024 * 1024

@@ -1,4 +1,4 @@
-"""Cache raw GPS for the locked held-out RAPHE validation cohort.
+"""Cache raw GPS for the locked held-out Cortex 2.0 validation cohort.
 
 Reads only the source files overlapping the 112 locked validation days.
 No feature values are computed here.
@@ -12,7 +12,7 @@ import pandas as pd
 
 ROOT = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability"
 )
@@ -24,7 +24,7 @@ LOCKED_DAYS_PATH = (
 
 INVENTORY_PATH = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "inventory/source_files/gps.parquet"
 )
 
@@ -58,7 +58,7 @@ days["date"] = (
 
 
 print("=" * 80)
-print("RAPHE HELD-OUT VALIDATION RAW GPS CACHE")
+print("Cortex 2.0 HELD-OUT VALIDATION RAW GPS CACHE")
 print("=" * 80)
 
 print(

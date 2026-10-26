@@ -1,6 +1,6 @@
 import numpy as np
 
-from raphe.quality.binning import temporal_bin_coverage
+from cortex2_engine.quality.binning import temporal_bin_coverage
 
 
 def test_empty_window_returns_zero():

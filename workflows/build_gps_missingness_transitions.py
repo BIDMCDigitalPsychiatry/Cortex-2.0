@@ -2,13 +2,13 @@ from pathlib import Path
 
 import pandas as pd
 
-from raphe.missingness.transitions import (
+from cortex2_engine.missingness.transitions import (
     add_hourly_missingness_transitions,
 )
 
 
 ROOT = Path(
-    "../raphe_outputs/digital_clinic/quality/"
+    "../cortex2_outputs/digital_clinic/quality/"
     "hourly_missingness"
 )
 

@@ -6,7 +6,7 @@ import pandas as pd
 ROOT = Path("/shared/Digital Clinic")
 
 RISK = Path(
-    "../raphe_outputs/digital_clinic/"
+    "../cortex2_outputs/digital_clinic/"
     "quality/hourly_missingness/"
     "gps_onset_contextual_risk_set.parquet"
 )
@@ -231,7 +231,7 @@ print(
 
 
 OUT = Path(
-    "../raphe_outputs/digital_clinic/"
+    "../cortex2_outputs/digital_clinic/"
     "inventory/"
     "risk_episode_ios_sensorkit_evidence.csv"
 )

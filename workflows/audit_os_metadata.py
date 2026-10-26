@@ -4,7 +4,7 @@ import pandas as pd
 
 
 ROOTS = [
-    Path("../raphe_outputs/digital_clinic"),
+    Path("../cortex2_outputs/digital_clinic"),
     Path("cortex_longitudinal/data"),
 ]
 

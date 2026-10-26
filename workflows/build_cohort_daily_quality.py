@@ -3,27 +3,27 @@ from pathlib import Path
 
 import pandas as pd
 
-from raphe.adapters.mindlamp import MindLAMPAdapter
-from raphe.canonical.reader import EpisodeReader
-from raphe.quality.episode import episode_daily_quality
+from cortex2_engine.adapters.mindlamp import MindLAMPAdapter
+from cortex2_engine.canonical.reader import EpisodeReader
+from cortex2_engine.quality.episode import episode_daily_quality
 
 
 EPISODES_PATH = Path(
-    "../raphe_outputs/digital_clinic/inventory/episodes.parquet"
+    "../cortex2_outputs/digital_clinic/inventory/episodes.parquet"
 )
 
 SOURCE_INTERVALS_PATH = Path(
-    "../raphe_outputs/digital_clinic/inventory/source_intervals.parquet"
+    "../cortex2_outputs/digital_clinic/inventory/source_intervals.parquet"
 )
 
 SOURCE_MANIFEST_DIR = Path(
-    "../raphe_outputs/digital_clinic/inventory/source_files"
+    "../cortex2_outputs/digital_clinic/inventory/source_files"
 )
 
 PASSIVE_ROOT = Path("../passive")
 
 OUTPUT_ROOT = Path(
-    "../raphe_outputs/digital_clinic/quality"
+    "../cortex2_outputs/digital_clinic/quality"
 )
 
 

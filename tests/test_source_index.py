@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from raphe.io.source_index import (
+from cortex2_engine.io.source_index import (
     SourceFileIndex,
 )
 

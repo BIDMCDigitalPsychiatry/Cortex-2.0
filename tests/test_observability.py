@@ -1,11 +1,11 @@
 import numpy as np
 import pandas as pd
 
-from raphe.quality.observability import (
+from cortex2_engine.quality.observability import (
     temporal_quality_metrics,
 )
 
-from raphe.quality.streams import (
+from cortex2_engine.quality.streams import (
     gps_quality,
     screen_quality,
 )

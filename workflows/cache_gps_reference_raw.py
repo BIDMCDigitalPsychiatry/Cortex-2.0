@@ -5,7 +5,7 @@ The reference set is the existing 65 benchmark days with Cortex GPS DQ == 1.
 Cortex is used ONLY to identify these high-observation reference days.
 No Cortex feature functions are used.
 
-The cached raw observations will be the starting point for RAPHE controlled
+The cached raw observations will be the starting point for Cortex 2.0 controlled
 missingness experiments.
 """
 
@@ -20,7 +20,7 @@ DAY_MS = 86_400_000
 
 INVENTORY_PATH = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "inventory/source_files/gps.parquet"
 )
 
@@ -33,7 +33,7 @@ DAILY_ROOT = Path(
 
 OUT_DIR = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability"
 )
@@ -135,7 +135,7 @@ reference["timestamp"] = (
 
 
 print("=" * 80)
-print("RAPHE RAW GPS REFERENCE CACHE")
+print("Cortex 2.0 RAW GPS REFERENCE CACHE")
 print("=" * 80)
 
 print(

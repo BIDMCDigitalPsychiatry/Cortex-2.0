@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from raphe.quality.daily import (
+from cortex2_engine.quality.daily import (
     daily_stream_quality,
 )
 

@@ -5,12 +5,12 @@ import pandas as pd
 
 
 INPUT = Path(
-    "../raphe_outputs/digital_clinic/quality/"
+    "../cortex2_outputs/digital_clinic/quality/"
     "hourly_missingness/gps_missingness_transitions.parquet"
 )
 
 OUTPUT = Path(
-    "../raphe_outputs/digital_clinic/quality/"
+    "../cortex2_outputs/digital_clinic/quality/"
     "hourly_missingness/gps_onset_risk_set.parquet"
 )
 

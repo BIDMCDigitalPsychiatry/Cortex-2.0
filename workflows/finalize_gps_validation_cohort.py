@@ -1,9 +1,9 @@
-"""Lock the held-out RAPHE GPS validation cohort.
+"""Lock the held-out Cortex 2.0 GPS validation cohort.
 
 Rules were fixed before examining held-out feature reliability:
 
 - development participants remain excluded
-- reference-day RAPHE 60-second observability >= 0.99
+- reference-day Cortex 2.0 60-second observability >= 0.99
 - >=7 eligible reference days required per participant
 - 4 participants per sampling-density quartile
 - participant choice uses the original deterministic selection order
@@ -22,7 +22,7 @@ import pandas as pd
 
 ROOT = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability"
 )
@@ -377,7 +377,7 @@ selected_days.to_parquet(
 
 design = {
     "design_name":
-        "RAPHE GPS location reliability held-out validation v1",
+        "Cortex 2.0 GPS location reliability held-out validation v1",
 
     "development_participants": [
         "CHO370",
@@ -415,7 +415,7 @@ design = {
     "reference_day_selection":
         (
             "7 temporally spread days among days with "
-            "RAPHE 60-second observability >=0.99"
+            "Cortex 2.0 60-second observability >=0.99"
         ),
 
     "frozen_location_algorithm": {
@@ -468,7 +468,7 @@ with open(
 # ============================================================
 
 print("=" * 80)
-print("RAPHE GPS HELD-OUT VALIDATION COHORT LOCKED")
+print("Cortex 2.0 GPS HELD-OUT VALIDATION COHORT LOCKED")
 print("=" * 80)
 
 print(

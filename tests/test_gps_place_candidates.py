@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from raphe.features.gps_place_candidates import (
+from cortex2_engine.features.gps_place_candidates import (
     build_place_candidates,
 )
 

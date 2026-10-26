@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from raphe.features.gps_degradation import (
+from cortex2_engine.features.gps_degradation import (
     apply_missing_bin_mask_to_points,
     make_missing_bin_mask,
 )

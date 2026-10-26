@@ -1,6 +1,6 @@
 import pandas as pd
 
-from raphe.canonical.validation import (
+from cortex2_engine.canonical.validation import (
     validate_canonical,
 )
 

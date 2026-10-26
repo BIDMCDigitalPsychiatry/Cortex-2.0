@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from raphe.adapters.mindlamp import MindLAMPAdapter
+from cortex2_engine.adapters.mindlamp import MindLAMPAdapter
 
 
 DAY_MS = 86_400_000
@@ -23,7 +23,7 @@ PARTICIPANT_MAP = Path(
 )
 
 OUTPUT_ROOT = Path(
-    "../raphe_outputs/"
+    "../cortex2_outputs/"
     "digital_clinic/"
     "validation"
 )
@@ -39,7 +39,7 @@ def stream_daily_dq(
     chunksize,
 ):
     """
-    Incrementally reproduce RAPHE temporal-bin observability
+    Incrementally reproduce Cortex 2.0 temporal-bin observability
     without holding raw sensor observations in memory.
     """
 
@@ -270,7 +270,7 @@ def main():
             flush=True,
         )
 
-        raphe_dq, meta = (
+        cortex2_dq, meta = (
             stream_daily_dq(
                 adapter,
                 stream=args.stream,
@@ -297,7 +297,7 @@ def main():
         )
 
         diff = np.abs(
-            raphe_dq
+            cortex2_dq
             - cortex_dq
         )
 
@@ -331,8 +331,8 @@ def main():
                 "cortex_dq":
                     cortex_dq[i],
 
-                "raphe_dq":
-                    raphe_dq[i],
+                "cortex2_dq":
+                    cortex2_dq[i],
 
                 "abs_diff":
                     diff[i],
@@ -389,7 +389,7 @@ def main():
     comparison_path = (
         OUTPUT_ROOT
         / (
-            "cortex_raphe_dq_5_"
+            "legacy_cortex_vs_cortex2_dq_5_"
             f"{args.stream}.csv"
         )
     )
@@ -442,7 +442,7 @@ def main():
     summary_path = (
         OUTPUT_ROOT
         / (
-            "cortex_raphe_dq_5_"
+            "legacy_cortex_vs_cortex2_dq_5_"
             f"{args.stream}_summary.csv"
         )
     )
@@ -478,7 +478,7 @@ def main():
                     "date",
                     "study_day",
                     "cortex_dq",
-                    "raphe_dq",
+                    "cortex2_dq",
                     "abs_diff",
                 ]
             ].to_string(

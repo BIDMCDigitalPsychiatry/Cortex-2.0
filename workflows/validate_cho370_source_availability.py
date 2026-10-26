@@ -1,18 +1,18 @@
 import pandas as pd
 
-from raphe.quality.source_availability import (
+from cortex2_engine.quality.source_availability import (
     classify_source_interval,
     resolve_source_boundary,
 )
 
 
 EPISODES = (
-    "../raphe_outputs/digital_clinic/"
+    "../cortex2_outputs/digital_clinic/"
     "inventory/episodes.parquet"
 )
 
 SOURCE_INTERVALS = (
-    "../raphe_outputs/digital_clinic/"
+    "../cortex2_outputs/digital_clinic/"
     "inventory/source_intervals.parquet"
 )
 

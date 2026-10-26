@@ -1,4 +1,4 @@
-"""Lock the independent RAPHE GPS reliability-validation cohort.
+"""Lock the independent Cortex 2.0 GPS reliability-validation cohort.
 
 Selection was fixed before examining feature degradation outcomes.
 
@@ -28,7 +28,7 @@ import pandas as pd
 
 ROOT = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability"
 )
@@ -529,7 +529,7 @@ DESIGN_OUT.write_text(
 # ============================================================
 
 print("=" * 80)
-print("RAPHE GPS INDEPENDENT RELIABILITY HOLDOUT — LOCKED")
+print("Cortex 2.0 GPS INDEPENDENT RELIABILITY HOLDOUT — LOCKED")
 print("=" * 80)
 
 print(

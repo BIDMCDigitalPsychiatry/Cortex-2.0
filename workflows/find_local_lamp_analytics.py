@@ -9,8 +9,8 @@ ROOT = Path("/shared/Digital Clinic")
 SKIP = {
     ".git",
     "__pycache__",
-    "RAPHE",
-    "raphe_outputs",
+    "Cortex 2.0",
+    "cortex2_outputs",
 }
 
 TERMS = [

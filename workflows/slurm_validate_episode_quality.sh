@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=raphe_episode_dq
+#SBATCH --job-name=cortex2_episode_dq
 #SBATCH --partition=cpu
 #SBATCH --nodelist=node001
 #SBATCH --cpus-per-task=1
@@ -10,7 +10,7 @@
 
 set -euo pipefail
 
-cd "/shared/Digital Clinic/RAPHE"
+cd "/shared/Digital Clinic/Cortex 2.0"
 
 /home/akargara/envs/socialmedia/bin/python \
   workflows/validate_episode_quality_cho370.py

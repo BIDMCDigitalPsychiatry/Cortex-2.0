@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=raphe_gps_quality
+#SBATCH --job-name=cortex2_gps_quality
 #SBATCH --partition=cpu
 #SBATCH --nodelist=node001
 #SBATCH --cpus-per-task=1
@@ -10,7 +10,7 @@
 
 set -euo pipefail
 
-cd "/shared/Digital Clinic/RAPHE"
+cd "/shared/Digital Clinic/Cortex 2.0"
 
 PYTHON="/home/akargara/envs/socialmedia/bin/python"
 

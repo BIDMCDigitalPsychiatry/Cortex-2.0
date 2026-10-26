@@ -1,11 +1,11 @@
 import pandas as pd
 import pytest
 
-from raphe.features.gps_location_episodes import (
+from cortex2_engine.features.gps_location_episodes import (
     build_location_compatible_episodes,
 )
 
-from raphe.features.gps_spatial_semantics import (
+from cortex2_engine.features.gps_spatial_semantics import (
     SPATIAL_STATUS_ACCURACY_OVERLAP,
     SPATIAL_STATUS_DISPLACEMENT_EXCEEDS_ACCURACY,
     SPATIAL_STATUS_TEMPORAL_GAP,

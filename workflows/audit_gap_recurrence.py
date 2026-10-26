@@ -4,7 +4,7 @@ import pandas as pd
 
 
 PATH = Path(
-    "../raphe_outputs/digital_clinic/quality/"
+    "../cortex2_outputs/digital_clinic/quality/"
     "hourly_missingness/gap_runs.parquet"
 )
 

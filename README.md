@@ -1,10 +1,10 @@
-# RAPHE
+# Cortex 2.0
 
-**RAPHE — Reliability-Aware Personalized Health Phenotyping Engine**
+**Cortex 2.0 — Reliability-Aware Personalized Health Phenotyping Engine**
 
-RAPHE is an open-source framework for building reliable and personalized digital phenotyping pipelines from longitudinal smartphone and wearable data.
+Cortex 2.0 is an open-source framework for building reliable and personalized digital phenotyping pipelines from longitudinal smartphone and wearable data.
 
-RAPHE is designed around the following processing chain:
+Cortex 2.0 is designed around the following processing chain:
 
 ```text
 Raw sensing data
@@ -30,13 +30,13 @@ Degradation and robustness analysis
 Personalized and transdiagnostic modeling
 ```
 
-## RAPHE and Cortex
+## Cortex 2.0 and legacy Cortex
 
-RAPHE is **not intended to replace Cortex**.
+Cortex 2.0 is a substantial redesign and extension of the original Cortex digital phenotyping framework.
 
-Instead, Cortex can operate as one feature-extraction engine within RAPHE alongside other pipelines such as FOREST, RAPIDS, RAPHE-native features, or other digital phenotyping tools.
+The original Cortex implementation remains available as a legacy reference and comparison pipeline. Cortex 2.0 extends the framework with standardized ingestion, source availability, sensor observability, temporal missingness characterization, reliability-aware feature extraction, personalization, clinical alignment, degradation testing, and cross-pipeline validation.
 
-RAPHE provides the surrounding infrastructure for standardized ingestion, source availability, sensor observability, reliability assessment, personalization, clinical alignment, degradation testing, and cross-pipeline validation.
+Where appropriate, legacy Cortex, FOREST, RAPIDS, and other digital phenotyping pipelines can be evaluated alongside Cortex 2.0 to compare feature semantics, reliability, and transportability.
 
 ## Core principles
 
@@ -69,9 +69,9 @@ The current implementation includes:
 - temporal missingness metrics
 - automated validation tests
 
-The current test suite has 30 passing tests.
+The current test suite has 156 passing tests.
 
-RAPHE is under active development and interfaces may change as the reliability, personalization, clinical alignment, degradation, and external-pipeline validation components are expanded.
+Cortex 2.0 is under active development and interfaces may change as the reliability, personalization, clinical alignment, degradation, and external-pipeline validation components are expanded.
 
 ## Installation
 
@@ -96,14 +96,14 @@ pytest -q
 ## Command line
 
 ```bash
-raphe version
-raphe info
+cortex2 version
+cortex2 info
 ```
 
 ## Repository structure
 
 ```text
-src/raphe/
+src/cortex2_engine/
     adapters/
     canonical/
     quality/
@@ -126,4 +126,4 @@ examples/
 
 ## Project status
 
-RAPHE is currently an early research and development version.
+Cortex 2.0 is currently an early research and development version.

@@ -12,14 +12,14 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from raphe.features.gps_place_candidates import (
+from cortex2_engine.features.gps_place_candidates import (
     build_place_candidates,
 )
 
 
 INPUT_PATH = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability/"
     "gps_reference_anchor_compatible_episodes.parquet"
@@ -57,7 +57,7 @@ episodes = pd.read_parquet(
 
 
 print("=" * 80)
-print("RAPHE PLACE-CANDIDATE SENSITIVITY")
+print("Cortex 2.0 PLACE-CANDIDATE SENSITIVITY")
 print("=" * 80)
 
 print(

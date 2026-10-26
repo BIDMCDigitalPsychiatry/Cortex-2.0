@@ -1,6 +1,6 @@
 """Audit GPS displacement relative to reported positional accuracy.
 
-Uses RAPHE-native supported edges only.
+Uses Cortex 2.0-native supported edges only.
 
 No Cortex feature functions are used.
 
@@ -25,7 +25,7 @@ import pandas as pd
 
 EDGE_PATH = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability/"
     "gps_reference_supported_edges.parquet"

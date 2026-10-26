@@ -5,7 +5,7 @@ import pandas as pd
 
 
 ROOT = Path(
-    "../raphe_outputs/digital_clinic"
+    "../cortex2_outputs/digital_clinic"
 )
 
 QUALITY = ROOT / "quality"

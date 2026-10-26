@@ -2,19 +2,19 @@ from pathlib import Path
 
 import pandas as pd
 
-from raphe.adapters.mindlamp import (
+from cortex2_engine.adapters.mindlamp import (
     MindLAMPAdapter,
 )
-from raphe.canonical.reader import (
+from cortex2_engine.canonical.reader import (
     EpisodeReader,
 )
-from raphe.missingness.hourly_context import (
+from cortex2_engine.missingness.hourly_context import (
     episode_hourly_context,
 )
 
 
 ROOT = Path(
-    "../raphe_outputs/digital_clinic"
+    "../cortex2_outputs/digital_clinic"
 )
 
 QUALITY = ROOT / "quality"
@@ -99,7 +99,7 @@ participant_map = episodes[
 participant_map_path = (
     ROOT
     / "inventory"
-    / "raphe_participant_map.csv"
+    / "cortex2_participant_map.csv"
 )
 
 participant_map.to_csv(

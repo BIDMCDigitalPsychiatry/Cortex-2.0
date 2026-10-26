@@ -4,8 +4,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from raphe.adapters.mindlamp import MindLAMPAdapter
-from raphe.quality.source_availability import (
+from cortex2_engine.adapters.mindlamp import MindLAMPAdapter
+from cortex2_engine.quality.source_availability import (
     SourceBoundaryStatus,
     classify_source_interval,
     resolve_source_boundary,
@@ -23,12 +23,12 @@ from validate_cortex_dq_5 import (
 
 
 SOURCE_INTERVALS = Path(
-    "../raphe_outputs/digital_clinic/"
+    "../cortex2_outputs/digital_clinic/"
     "inventory/source_intervals.parquet"
 )
 
 SOURCE_MANIFEST_DIR = Path(
-    "../raphe_outputs/digital_clinic/"
+    "../cortex2_outputs/digital_clinic/"
     "inventory/source_files"
 )
 
@@ -174,7 +174,7 @@ def main():
             )
         )
 
-        raw_raphe_dq, meta = stream_daily_dq(
+        raw_cortex2_dq, meta = stream_daily_dq(
             adapter,
             stream=args.stream,
             uid=uid,
@@ -260,9 +260,9 @@ def main():
         # For the Cortex full-day benchmark, days that were
         # definitely outside or only partly inside the declared
         # source interval are not comparable.
-        raphe_dq = raw_raphe_dq.copy()
+        cortex2_dq = raw_cortex2_dq.copy()
 
-        raphe_dq[
+        cortex2_dq[
             source_unavailable
             | partial_source
         ] = np.nan
@@ -275,7 +275,7 @@ def main():
         )
 
         comparable = (
-            np.isfinite(raphe_dq)
+            np.isfinite(cortex2_dq)
             & np.isfinite(cortex_dq)
         )
 
@@ -286,7 +286,7 @@ def main():
         )
 
         diff[comparable] = np.abs(
-            raphe_dq[comparable]
+            cortex2_dq[comparable]
             - cortex_dq[comparable]
         )
 
@@ -359,11 +359,11 @@ def main():
                 "cortex_dq":
                     cortex_dq[i],
 
-                "raphe_dq_raw":
-                    raw_raphe_dq[i],
+                "cortex2_dq_raw":
+                    raw_cortex2_dq[i],
 
-                "raphe_dq":
-                    raphe_dq[i],
+                "cortex2_dq":
+                    cortex2_dq[i],
 
                 "comparable":
                     bool(
@@ -453,7 +453,7 @@ def main():
     comparison_path = (
         OUTPUT_ROOT
         / (
-            "cortex_raphe_dq_5_"
+            "legacy_cortex_vs_cortex2_dq_5_"
             f"{args.stream}_source_aware.csv"
         )
     )
@@ -515,7 +515,7 @@ def main():
     summary_path = (
         OUTPUT_ROOT
         / (
-            "cortex_raphe_dq_5_"
+            "legacy_cortex_vs_cortex2_dq_5_"
             f"{args.stream}_source_aware_summary.csv"
         )
     )
@@ -550,7 +550,7 @@ def main():
                     "date",
                     "study_day",
                     "cortex_dq",
-                    "raphe_dq",
+                    "cortex2_dq",
                     "abs_diff",
                     "source_status",
                 ]
@@ -582,8 +582,8 @@ def main():
                     "source_status",
                     "source_available_fraction",
                     "cortex_dq",
-                    "raphe_dq_raw",
-                    "raphe_dq",
+                    "cortex2_dq_raw",
+                    "cortex2_dq",
                 ]
             ].to_string(
                 index=False

@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
 
-from raphe.canonical.reader import (
+from cortex2_engine.canonical.reader import (
     EpisodeReader,
 )
-from raphe.quality.episode import (
+from cortex2_engine.quality.episode import (
     DAY_MS,
     episode_daily_quality,
 )

@@ -1,6 +1,6 @@
 import pandas as pd
 
-from raphe.adapters.mindlamp import (
+from cortex2_engine.adapters.mindlamp import (
     MindLAMPAdapter,
 )
 

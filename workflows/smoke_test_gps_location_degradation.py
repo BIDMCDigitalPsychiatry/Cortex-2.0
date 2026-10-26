@@ -1,4 +1,4 @@
-"""Smoke test for RAPHE GPS location-feature degradation.
+"""Smoke test for Cortex 2.0 GPS location-feature degradation.
 
 Experiment:
 - 75% planned temporal coverage
@@ -8,7 +8,7 @@ Experiment:
 - all 3 participants
 - all 4 place compatibility multipliers
 
-Missingness is imposed on RAW GPS points and the complete RAPHE location
+Missingness is imposed on RAW GPS points and the complete Cortex 2.0 location
 pipeline is rebuilt from scratch.
 """
 
@@ -20,28 +20,28 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from raphe.features.gps_degradation import (
+from cortex2_engine.features.gps_degradation import (
     apply_missing_bin_mask_to_points,
     make_missing_bin_mask,
 )
 
-from raphe.features.gps_intervals import (
+from cortex2_engine.features.gps_intervals import (
     build_gps_intervals,
 )
 
-from raphe.features.gps_spatial_semantics import (
+from cortex2_engine.features.gps_spatial_semantics import (
     add_gps_spatial_semantics,
 )
 
-from raphe.features.gps_anchor_episodes import (
+from cortex2_engine.features.gps_anchor_episodes import (
     build_anchor_compatible_location_episodes,
 )
 
-from raphe.features.gps_place_candidates import (
+from cortex2_engine.features.gps_place_candidates import (
     build_place_candidates,
 )
 
-from raphe.features.gps_location_features import (
+from cortex2_engine.features.gps_location_features import (
     compute_daily_location_features,
 )
 
@@ -74,7 +74,7 @@ MULTIPLIERS = [
 
 ROOT = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability"
 )
@@ -152,7 +152,7 @@ reference["date"] = (
 
 
 print("=" * 80)
-print("RAPHE GPS LOCATION DEGRADATION SMOKE TEST")
+print("Cortex 2.0 GPS LOCATION DEGRADATION SMOKE TEST")
 print("=" * 80)
 
 print(

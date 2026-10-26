@@ -16,7 +16,7 @@ STREAMS = {
 }
 
 OUT = Path(
-    "../raphe_outputs/digital_clinic/"
+    "../cortex2_outputs/digital_clinic/"
     "inventory/source_boundary_audit.csv"
 )
 

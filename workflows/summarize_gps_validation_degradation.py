@@ -1,4 +1,4 @@
-"""Summarize held-out RAPHE GPS location-feature validation.
+"""Summarize held-out Cortex 2.0 GPS location-feature validation.
 
 Validation design is frozen:
 - 16 held-out participants
@@ -24,7 +24,7 @@ import pandas as pd
 
 ROOT = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability"
 )
@@ -159,7 +159,7 @@ files = sorted(
 
 
 print("=" * 80)
-print("RAPHE HELD-OUT GPS VALIDATION SUMMARY")
+print("Cortex 2.0 HELD-OUT GPS VALIDATION SUMMARY")
 print("=" * 80)
 
 print(

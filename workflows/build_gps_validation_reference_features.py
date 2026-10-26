@@ -4,7 +4,7 @@ Validation design is already locked:
 - 16 held-out participants
 - 7 reference days per participant
 - 112 participant-days
-- RAPHE 60-second continuity policy
+- Cortex 2.0 60-second continuity policy
 - compatibility_multiplier = 2.0
 
 No parameter tuning is performed here.
@@ -25,23 +25,23 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from raphe.features.gps_intervals import (
+from cortex2_engine.features.gps_intervals import (
     build_gps_intervals,
 )
 
-from raphe.features.gps_spatial_semantics import (
+from cortex2_engine.features.gps_spatial_semantics import (
     add_gps_spatial_semantics,
 )
 
-from raphe.features.gps_anchor_episodes import (
+from cortex2_engine.features.gps_anchor_episodes import (
     build_anchor_compatible_location_episodes,
 )
 
-from raphe.features.gps_place_candidates import (
+from cortex2_engine.features.gps_place_candidates import (
     build_place_candidates,
 )
 
-from raphe.features.gps_location_features import (
+from cortex2_engine.features.gps_location_features import (
     compute_daily_location_features,
 )
 
@@ -52,7 +52,7 @@ COMPATIBILITY_MULTIPLIER = 2.0
 
 ROOT = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability"
 )
@@ -98,7 +98,7 @@ raw["date"] = (
 
 
 print("=" * 80)
-print("RAPHE HELD-OUT GPS REFERENCE FEATURE BUILD")
+print("Cortex 2.0 HELD-OUT GPS REFERENCE FEATURE BUILD")
 print("=" * 80)
 
 print(

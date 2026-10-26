@@ -1,4 +1,4 @@
-"""Audit RAPHE time-weighted GPS location features.
+"""Audit Cortex 2.0 time-weighted GPS location features.
 
 Computes daily location entropy and dominant-place occupancy across the
 candidate-place sensitivity models.
@@ -11,14 +11,14 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from raphe.features.gps_location_features import (
+from cortex2_engine.features.gps_location_features import (
     compute_daily_location_features,
 )
 
 
 ROOT = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability"
 )
@@ -70,7 +70,7 @@ daily_obs["date"] = (
 
 
 print("=" * 80)
-print("RAPHE TIME-WEIGHTED LOCATION FEATURE AUDIT")
+print("Cortex 2.0 TIME-WEIGHTED LOCATION FEATURE AUDIT")
 print("=" * 80)
 
 print(

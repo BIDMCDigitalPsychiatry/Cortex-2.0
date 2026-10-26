@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from raphe.features.missingness_structure import (
+from cortex2_engine.features.missingness_structure import (
     compute_missingness_structure,
 )
 

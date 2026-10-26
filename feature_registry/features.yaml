@@ -4,7 +4,7 @@ features:
     display_name: GPS data quality
     category: observability
     source_stream: gps
-    engine: raphe
+    engine: cortex2
     unit: proportion
     native: false
     personalized: false
@@ -13,7 +13,7 @@ features:
     display_name: Accelerometer data quality
     category: observability
     source_stream: accelerometer
-    engine: raphe
+    engine: cortex2
     unit: proportion
     native: false
     personalized: false
@@ -22,7 +22,7 @@ features:
     display_name: Screen stream availability
     category: observability
     source_stream: screen
-    engine: raphe
+    engine: cortex2
     unit: binary
     native: false
     personalized: false
@@ -86,7 +86,7 @@ features:
     display_name: Trip count
     category: mobility
     source_stream: gps
-    engine: raphe
+    engine: cortex2
     dependency: cortex.trips
     unit: count_per_day
     personalized: true
@@ -97,7 +97,7 @@ features:
     display_name: Significant location count
     category: mobility
     source_stream: gps
-    engine: raphe
+    engine: cortex2
     dependency: cortex.significant_locations
     unit: count_per_day
     personalized: true

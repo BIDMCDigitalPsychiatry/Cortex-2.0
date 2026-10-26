@@ -5,7 +5,7 @@ import pandas as pd
 
 
 ROOT = Path(
-    "../raphe_outputs/digital_clinic/quality"
+    "../cortex2_outputs/digital_clinic/quality"
 )
 
 gps = pd.read_parquet(

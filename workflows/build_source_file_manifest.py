@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from raphe.adapters.mindlamp_manifest import (
+from cortex2_engine.adapters.mindlamp_manifest import (
     file_manifest_record,
     list_mindlamp_files,
 )
@@ -12,7 +12,7 @@ from raphe.adapters.mindlamp_manifest import (
 PASSIVE_ROOT = Path("../passive")
 
 OUTPUT_ROOT = Path(
-    "../raphe_outputs/digital_clinic/"
+    "../cortex2_outputs/digital_clinic/"
     "inventory/source_files"
 )
 

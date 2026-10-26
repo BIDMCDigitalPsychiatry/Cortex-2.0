@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from raphe.features.gps_intervals import (
+from cortex2_engine.features.gps_intervals import (
     build_gps_intervals,
     haversine_km,
 )

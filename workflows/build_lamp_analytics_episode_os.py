@@ -9,7 +9,7 @@ import LAMP.rest
 
 
 ROOT = Path(
-    "../raphe_outputs/digital_clinic"
+    "../cortex2_outputs/digital_clinic"
 )
 
 EPISODES_PATH = (

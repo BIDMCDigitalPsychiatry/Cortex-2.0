@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from raphe.features.gps_spatial_semantics import (
+from cortex2_engine.features.gps_spatial_semantics import (
     add_gps_spatial_semantics,
     SPATIAL_STATUS_TEMPORAL_GAP,
     SPATIAL_STATUS_ACCURACY_UNAVAILABLE,

@@ -1,4 +1,4 @@
-"""Sensitivity analysis for RAPHE natural-variability normalization.
+"""Sensitivity analysis for Cortex 2.0 natural-variability normalization.
 
 Compares three participant-specific natural variability scales:
 
@@ -18,7 +18,7 @@ import pandas as pd
 
 ROOT = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability"
 )
@@ -178,7 +178,7 @@ df = pd.read_parquet(
 
 
 print("=" * 80)
-print("RAPHE GPS NORMALIZATION-SCALE SENSITIVITY")
+print("Cortex 2.0 GPS NORMALIZATION-SCALE SENSITIVITY")
 print("=" * 80)
 
 print(

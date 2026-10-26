@@ -1,7 +1,7 @@
-"""Audit candidate GPS days for held-out RAPHE reliability validation.
+"""Audit candidate GPS days for held-out Cortex 2.0 reliability validation.
 
 This uses the existing 10-minute-bin daily DQ table only as a candidate
-prefilter. It does NOT treat that DQ measure as the final 60-second RAPHE
+prefilter. It does NOT treat that DQ measure as the final 60-second Cortex 2.0
 temporal observability measure.
 """
 
@@ -12,7 +12,7 @@ import pandas as pd
 
 PATH = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "quality/gps_daily.parquet"
 )
 
@@ -46,7 +46,7 @@ heldout = df[
 
 
 print("=" * 80)
-print("RAPHE GPS HELD-OUT VALIDATION CANDIDATE AUDIT")
+print("Cortex 2.0 GPS HELD-OUT VALIDATION CANDIDATE AUDIT")
 print("=" * 80)
 
 print(

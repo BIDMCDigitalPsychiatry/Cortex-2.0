@@ -1,4 +1,4 @@
-"""Analyze RAPHE GPS reliability across a continuum of missingness geometry.
+"""Analyze Cortex 2.0 GPS reliability across a continuum of missingness geometry.
 
 Combines:
 - original contiguous missingness
@@ -39,7 +39,7 @@ import pandas as pd
 
 ROOT = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability"
 )
@@ -1590,7 +1590,7 @@ cv_summary.to_csv(
 # ============================================================
 
 print("=" * 80)
-print("RAPHE GPS CONTINUOUS MISSINGNESS RELIABILITY")
+print("Cortex 2.0 GPS CONTINUOUS MISSINGNESS RELIABILITY")
 print("=" * 80)
 
 print(

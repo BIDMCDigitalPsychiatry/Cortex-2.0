@@ -1,4 +1,4 @@
-"""Characterize RAPHE location-compatible GPS episodes.
+"""Characterize Cortex 2.0 location-compatible GPS episodes.
 
 Uses the previously generated high-observability reference edges.
 
@@ -13,18 +13,18 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from raphe.features.gps_location_episodes import (
+from cortex2_engine.features.gps_location_episodes import (
     build_location_compatible_episodes,
 )
 
-from raphe.features.gps_spatial_semantics import (
+from cortex2_engine.features.gps_spatial_semantics import (
     add_gps_spatial_semantics,
 )
 
 
 EDGE_PATH = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability/"
     "gps_reference_supported_edges.parquet"
@@ -67,7 +67,7 @@ edges = pd.read_parquet(
 )
 
 print("=" * 80)
-print("RAPHE LOCATION-COMPATIBLE EPISODE AUDIT")
+print("Cortex 2.0 LOCATION-COMPATIBLE EPISODE AUDIT")
 print("=" * 80)
 
 print(

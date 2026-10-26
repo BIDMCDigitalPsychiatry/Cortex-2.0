@@ -2,13 +2,13 @@ from pathlib import Path
 
 import pandas as pd
 
-from raphe.quality.reliability_context import (
+from cortex2_engine.quality.reliability_context import (
     classify_daily_observability,
 )
 
 
 ROOT = Path(
-    "../raphe_outputs/digital_clinic/quality"
+    "../cortex2_outputs/digital_clinic/quality"
 )
 
 CONTEXT = ROOT / "episode_stream_context.parquet"

@@ -1,7 +1,7 @@
 import pandas as pd
 
-from raphe.adapters.mindlamp import MindLAMPAdapter
-from raphe.canonical.storage import (
+from cortex2_engine.adapters.mindlamp import MindLAMPAdapter
+from cortex2_engine.canonical.storage import (
     MaterializedCanonicalStore,
     VirtualCanonicalStore,
 )

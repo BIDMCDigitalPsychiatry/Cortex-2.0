@@ -1,4 +1,4 @@
-"""Select participant-held-out candidates for RAPHE GPS reliability validation.
+"""Select participant-held-out candidates for Cortex 2.0 GPS reliability validation.
 
 Selection is performed BEFORE looking at validation feature reliability.
 
@@ -12,7 +12,7 @@ Design
 5. Select 14 temporally spread coarse-perfect candidate days per participant.
 
 The existing 10-minute-bin DQ is used ONLY as an efficient prefilter.
-Final reference-day eligibility will use RAPHE's 60-second temporal
+Final reference-day eligibility will use Cortex 2.0's 60-second temporal
 observability calculation.
 """
 
@@ -25,13 +25,13 @@ import pandas as pd
 
 QUALITY_PATH = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "quality/gps_daily.parquet"
 )
 
 OUT_ROOT = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability"
 )
@@ -58,7 +58,7 @@ PARTICIPANTS_PER_STRATUM = 8
 CANDIDATE_DAYS_PER_PARTICIPANT = 14
 
 SELECTION_NAMESPACE = (
-    "raphe_gps_validation_v1"
+    "cortex2_gps_validation_v1"
 )
 
 
@@ -333,7 +333,7 @@ candidate_days.to_parquet(
 # ============================================================
 
 print("=" * 80)
-print("RAPHE GPS VALIDATION CANDIDATE SELECTION")
+print("Cortex 2.0 GPS VALIDATION CANDIDATE SELECTION")
 print("=" * 80)
 
 print(

@@ -7,7 +7,7 @@ import pandas as pd
 
 ROOT = Path(
     "/shared/Digital Clinic/"
-    "raphe_outputs/digital_clinic/"
+    "cortex2_outputs/digital_clinic/"
     "feature_reliability/"
     "gps_observability"
 )
@@ -65,7 +65,7 @@ intermediate_files = sorted(
 
 
 print("=" * 80)
-print("RAPHE GPS INDEPENDENT HOLDOUT MATRIX AUDIT")
+print("Cortex 2.0 GPS INDEPENDENT HOLDOUT MATRIX AUDIT")
 print("=" * 80)
 
 print(
