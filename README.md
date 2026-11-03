@@ -77,7 +77,7 @@ The current implementation includes:
 - a daily feature driver (`cortex2 features`) writing one long parquet table
 - automated validation tests
 
-The current test suite has 156 passing tests.
+The current test suite has 455 passing tests (370 test functions; `pytest -q`).
 
 Cortex 2.0 is under active development and interfaces may change as the reliability, personalization, clinical alignment, degradation, and external-pipeline validation components are expanded.
 

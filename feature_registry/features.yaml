@@ -1,3 +1,8 @@
+# reliability_threshold: minimum daily coverage at which the feature's error from
+# missing data stays below within-person day-to-day variation. Written only by
+# features/degradation_sweep.write_reliability_thresholds for a named reference set
+# (recorded as reliability_reference_set). None is supplied yet, so all are null.
+# See docs/features/degradation.md.
 features:
 
   gps_data_quality:

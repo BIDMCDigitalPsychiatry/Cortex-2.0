@@ -322,3 +322,31 @@ Specification: `docs/features/daily_driver.md`.
   checks schema, valid statuses, no bare zeros on an unobserved day, unit agreement between
   driver and registry, and registry integrity (required fields, a minimum entry count).
 - README: new capabilities and CLI commands.
+
+## Phase 10 — Degradation sweep
+
+Specification: `docs/features/degradation.md`.
+
+### Added
+- `features/degradation_sweep.py`:
+  - `ReferenceDay` and `degrade_streams`.
+  - `run_degradation_sweep(reference_days, feature_fn, features, *,
+    coverages=(0.9, …, 0.3), n_runs=(1, 4), n_replicates=5, bin_size_ms=300_000, seed=0)`.
+    It reuses `missingness_simulation.make_balanced_k_run_missing_bin_mask` and
+    `gps_degradation.apply_missing_bin_mask_to_points`.
+  - `within_person_mad`, `summarise_sweep` and `reliability_thresholds`. The threshold is
+    the coverage at which median absolute error exceeds the within-person MAD, judged on
+    the worst run design.
+  - `write_reliability_thresholds(..., reference_set=...)`. It refuses to run without a
+    named reference set and edits only the threshold lines of the registry.
+- Tests: `test_degradation_sweep.py` (9).
+  - A toy feature with analytic errors (10 % / 50 % of the day's total) and MAD (432).
+  - An accelerometer smoke test.
+  - Registry write and refusal.
+  - The shipped registry keeps every `native` threshold `null`.
+  - Validation branches of the reused mask generators.
+- Coverage: `degradation_sweep` 100 %, `gps_degradation` 100 %, `missingness_simulation` 96 %.
+
+### Registry
+- `reliability_threshold` stays `null` for every entry, because no reference set is
+  supplied. When a threshold is written, `reliability_reference_set` is recorded beside it.
