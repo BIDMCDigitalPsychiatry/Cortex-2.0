@@ -3,7 +3,6 @@ from cortex2_engine.quality.source_availability import (
     classify_source_interval,
 )
 
-
 DAY = 86_400_000
 
 

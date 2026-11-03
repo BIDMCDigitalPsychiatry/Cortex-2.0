@@ -45,9 +45,7 @@ def compute_missingness_structure(
         )
 
 
-    n_bins = int(
-        len(mask)
-    )
+    n_bins = len(mask)
 
     n_missing_bins = int(
         mask.sum()
@@ -110,11 +108,9 @@ def compute_missingness_structure(
     )
 
 
-    missing_run_count = int(
-        len(
+    missing_run_count = len(
             run_lengths_bins
         )
-    )
 
 
     if missing_run_count:

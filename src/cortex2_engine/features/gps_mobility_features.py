@@ -17,10 +17,9 @@ import pandas as pd
 from cortex2_engine.features.gps_intervals import (
     haversine_km,
 )
-
 from cortex2_engine.features.gps_trajectory_plausibility import (
-    TRAJECTORY_STATUS_PLAUSIBLE_DISPLACEMENT,
     TRAJECTORY_STATUS_IMPLAUSIBLE_SPEED,
+    TRAJECTORY_STATUS_PLAUSIBLE_DISPLACEMENT,
 )
 
 

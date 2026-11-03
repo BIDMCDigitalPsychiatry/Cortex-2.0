@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
 
-import numpy as np
 import pandas as pd
 
 from cortex2_engine.canonical.schemas import load_schema
+from cortex2_engine.canonical.timestamps import datetime_to_epoch_ms
 
 
 @dataclass
@@ -142,10 +142,9 @@ def _check_timestamps(
         )
         return
 
-    reconstructed = (
-        dt.astype("int64")
-        // 1_000_000
-    )
+    reconstructed = datetime_to_epoch_ms(
+        dt
+    ).astype("float64")
 
     diff = (
         reconstructed

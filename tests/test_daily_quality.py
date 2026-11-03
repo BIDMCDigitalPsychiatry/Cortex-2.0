@@ -5,7 +5,6 @@ from cortex2_engine.quality.daily import (
     daily_stream_quality,
 )
 
-
 DAY = 86_400_000
 
 

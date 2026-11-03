@@ -7,7 +7,6 @@ from cortex2_engine.features.gps_degradation import (
     make_missing_bin_mask,
 )
 
-
 MINUTE = 60_000
 
 

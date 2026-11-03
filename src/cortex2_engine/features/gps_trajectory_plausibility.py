@@ -19,7 +19,6 @@ from cortex2_engine.features.gps_spatial_semantics import (
     SPATIAL_STATUS_DISPLACEMENT_EXCEEDS_ACCURACY,
 )
 
-
 TRAJECTORY_STATUS_NOT_DISPLACEMENT = (
     "not_displacement"
 )

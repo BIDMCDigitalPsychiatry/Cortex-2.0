@@ -1,4 +1,3 @@
-import math
 
 import numpy as np
 import pandas as pd
@@ -7,14 +6,12 @@ import pytest
 from cortex2_engine.features.gps_mobility_features import (
     compute_daily_mobility_features,
 )
-
-from cortex2_engine.features.gps_trajectory_plausibility import (
-    add_gps_trajectory_plausibility,
-)
-
 from cortex2_engine.features.gps_spatial_semantics import (
     SPATIAL_STATUS_ACCURACY_OVERLAP,
     SPATIAL_STATUS_DISPLACEMENT_EXCEEDS_ACCURACY,
+)
+from cortex2_engine.features.gps_trajectory_plausibility import (
+    add_gps_trajectory_plausibility,
 )
 
 

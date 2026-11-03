@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 
-
 HOUR_MS = 3_600_000
 
 

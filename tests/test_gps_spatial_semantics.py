@@ -3,11 +3,11 @@ import pandas as pd
 import pytest
 
 from cortex2_engine.features.gps_spatial_semantics import (
-    add_gps_spatial_semantics,
-    SPATIAL_STATUS_TEMPORAL_GAP,
-    SPATIAL_STATUS_ACCURACY_UNAVAILABLE,
     SPATIAL_STATUS_ACCURACY_OVERLAP,
+    SPATIAL_STATUS_ACCURACY_UNAVAILABLE,
     SPATIAL_STATUS_DISPLACEMENT_EXCEEDS_ACCURACY,
+    SPATIAL_STATUS_TEMPORAL_GAP,
+    add_gps_spatial_semantics,
 )
 
 

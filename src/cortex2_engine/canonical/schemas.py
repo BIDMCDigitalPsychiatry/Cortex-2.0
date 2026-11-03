@@ -2,7 +2,6 @@ from importlib.resources import files
 
 import yaml
 
-
 SCHEMA_NAMES = {
     "study",
     "episodes",

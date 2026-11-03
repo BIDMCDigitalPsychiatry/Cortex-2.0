@@ -4,7 +4,6 @@ from cortex2_engine.features.gps_observability import (
     compute_gps_temporal_observability,
 )
 
-
 MINUTE = 60_000
 
 

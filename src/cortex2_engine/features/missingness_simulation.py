@@ -85,15 +85,14 @@ def make_balanced_k_run_missing_bin_mask(
     )
 
 
-    n_bins = int(
-        math.ceil(
-            duration_ms
-            / bin_size_ms
-        )
+    n_bins = math.ceil(
+        duration_ms
+        / bin_size_ms
     )
 
 
-    n_missing = int(
+    # int() is required: round() on a numpy<2 float64 returns a float.
+    n_missing = int(  # noqa: RUF046
         round(
             (1.0 - target_coverage)
             * n_bins

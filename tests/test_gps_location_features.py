@@ -8,7 +8,6 @@ from cortex2_engine.features.gps_location_features import (
     compute_daily_location_features,
 )
 
-
 HOUR = 3_600_000
 
 

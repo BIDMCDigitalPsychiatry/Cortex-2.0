@@ -1,12 +1,13 @@
-from pathlib import Path
 import hashlib
 from collections.abc import Iterator
+from pathlib import Path
+from typing import ClassVar
 
 import pandas as pd
 
 from cortex2_engine.adapters.base import BaseAdapter
-from cortex2_engine.io.source_index import SourceFileIndex
 from cortex2_engine.canonical.validation import validate_canonical
+from cortex2_engine.io.source_index import SourceFileIndex
 
 
 class MindLAMPAdapter(BaseAdapter):
@@ -32,7 +33,7 @@ class MindLAMPAdapter(BaseAdapter):
     adapter_name = "mindlamp"
     adapter_version = "1.0"
 
-    STREAM_PREFIX = {
+    STREAM_PREFIX: ClassVar[dict[str, str]] = {
         "gps": "gps",
         "accelerometer": "acc",
         "screen": "screen",
@@ -40,7 +41,7 @@ class MindLAMPAdapter(BaseAdapter):
         "nearby_device": "nearby_device",
     }
 
-    SCHEMA_NAME = {
+    SCHEMA_NAME: ClassVar[dict[str, str]] = {
         "gps": "gps",
         "accelerometer": "accelerometer",
         "screen": "screen",

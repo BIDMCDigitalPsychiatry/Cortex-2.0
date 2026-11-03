@@ -283,11 +283,9 @@ def compute_daily_location_features(
             "observed_value",
 
         "n_observed_places":
-            int(
-                len(
+            len(
                     occupancy
-                )
-            ),
+                ),
 
         "assigned_place_time_ms":
             total_time,

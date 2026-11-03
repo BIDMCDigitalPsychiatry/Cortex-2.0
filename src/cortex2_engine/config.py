@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Dict
 
 import yaml
 from pydantic import BaseModel, Field
@@ -23,7 +22,7 @@ class StudyConfig(BaseModel):
     timezone: str = "UTC"
     output_dir: Path
     windows: WindowsConfig
-    streams: Dict[str, StreamConfig] = Field(default_factory=dict)
+    streams: dict[str, StreamConfig] = Field(default_factory=dict)
 
 
 def load_study_config(path: str | Path) -> StudyConfig:

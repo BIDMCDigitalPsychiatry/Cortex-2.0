@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from typing import Annotated
 
 import typer
 
@@ -39,13 +40,15 @@ def info():
 
 @app.command()
 def inventory(
-    config: Path = typer.Option(
-        ...,
-        "--config",
-        "-c",
-        exists=True,
-        readable=True,
-    )
+    config: Annotated[
+        Path,
+        typer.Option(
+            "--config",
+            "-c",
+            exists=True,
+            readable=True,
+        ),
+    ],
 ):
     """Validate a study and build its canonical inventory."""
 

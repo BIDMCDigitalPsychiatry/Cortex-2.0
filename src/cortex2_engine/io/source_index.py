@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import ClassVar
 
 import pandas as pd
 
@@ -16,7 +17,7 @@ class SourceFileIndex:
     and receives only source files that can overlap that request.
     """
 
-    REQUIRED_COLUMNS = {
+    REQUIRED_COLUMNS: ClassVar[set[str]] = {
         "stream",
         "source_participant_id",
         "source_file",
@@ -217,10 +218,10 @@ class SourceFileIndex:
                 stream,
 
             "manifest_files":
-                int(len(all_rows)),
+                len(all_rows),
 
             "selected_files":
-                int(len(selected)),
+                len(selected),
 
             "selected_bytes":
                 int(

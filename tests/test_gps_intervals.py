@@ -6,7 +6,6 @@ from cortex2_engine.features.gps_intervals import (
     haversine_km,
 )
 
-
 MINUTE = 60_000
 
 

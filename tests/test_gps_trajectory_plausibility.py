@@ -1,16 +1,15 @@
 import pandas as pd
 import pytest
 
-from cortex2_engine.features.gps_trajectory_plausibility import (
-    add_gps_trajectory_plausibility,
-    TRAJECTORY_STATUS_NOT_DISPLACEMENT,
-    TRAJECTORY_STATUS_PLAUSIBLE_DISPLACEMENT,
-    TRAJECTORY_STATUS_IMPLAUSIBLE_SPEED,
-)
-
 from cortex2_engine.features.gps_spatial_semantics import (
     SPATIAL_STATUS_ACCURACY_OVERLAP,
     SPATIAL_STATUS_DISPLACEMENT_EXCEEDS_ACCURACY,
+)
+from cortex2_engine.features.gps_trajectory_plausibility import (
+    TRAJECTORY_STATUS_IMPLAUSIBLE_SPEED,
+    TRAJECTORY_STATUS_NOT_DISPLACEMENT,
+    TRAJECTORY_STATUS_PLAUSIBLE_DISPLACEMENT,
+    add_gps_trajectory_plausibility,
 )
 
 

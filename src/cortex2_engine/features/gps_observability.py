@@ -24,9 +24,11 @@ Windows are [window_start_ms, window_end_ms), i.e. end-exclusive.
 
 from __future__ import annotations
 
-from statistics import median
+import itertools
 import math
-from typing import Iterable, Any
+from collections.abc import Iterable
+from statistics import median
+from typing import Any
 
 
 def _coerce_timestamp(value: Any) -> int | None:
@@ -294,10 +296,7 @@ def compute_gps_temporal_observability(
     if len(timestamps) >= 2:
         deltas = [
             right - left
-            for left, right in zip(
-                timestamps[:-1],
-                timestamps[1:],
-            )
+            for left, right in itertools.pairwise(timestamps)
         ]
 
         median_sampling_interval_ms = median(
@@ -313,10 +312,7 @@ def compute_gps_temporal_observability(
         tuple[int, int]
     ] = []
 
-    for left, right in zip(
-        timestamps[:-1],
-        timestamps[1:],
-    ):
+    for left, right in itertools.pairwise(timestamps):
         gap = (
             right
             - left
