@@ -883,3 +883,34 @@ features:
     minimum_observability: ">= 12 eligible hours"
     reliability_threshold: null
     reference: Cortex 2.0 (this work; docs/gps_missingness_wifi_module.md onset regimes)
+
+  # --- Phase 8: baselines (docs/features/baselines_clinical.md) ---
+  # Derived per input feature; registered once as generic transforms.
+
+  robust_z:
+    display_name: Personal-baseline robust z (any feature)
+    category: derived
+    source_stream: any
+    engine: cortex2
+    native: true
+    module: baseline.personal
+    unit: robust_sd
+    personalized: true
+    reliability_metric: baseline_n_observations
+    minimum_observability: ">= 3 prior valid observations"
+    reliability_threshold: null
+    reference: Leys 2013
+
+  deviation:
+    display_name: Deviation from personal baseline (any feature)
+    category: derived
+    source_stream: any
+    engine: cortex2
+    native: true
+    module: baseline.personal
+    unit: feature_unit
+    personalized: true
+    reliability_metric: baseline_n_observations
+    minimum_observability: ">= 3 prior valid observations"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)

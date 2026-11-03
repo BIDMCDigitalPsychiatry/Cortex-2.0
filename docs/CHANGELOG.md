@@ -279,3 +279,25 @@ Specification: `docs/features/missingness.md`.
 
 ### References
 Onset regimes: `docs/gps_missingness_wifi_module.md` (this repository).
+
+## Phase 8 — Baselines and clinical alignment
+
+Specification: `docs/features/baselines_clinical.md`.
+
+### Added
+- `baseline/personal.py`: `rolling_personal_baseline(daily, *, feature,
+  window_observations ∈ {3, 5, 7, 10, 14}, statistics=("median", "mad", "iqr"),
+  min_observations=3, weight_column="completeness_weight")`. Prior-only, weighted
+  baselines with `baseline_value`, `deviation`, `robust_z` (MAD, with IQR fallback) and
+  `direction`. `BaselineConfig` mirrors `configs/default.yaml::baseline`; `weighted_quantile`.
+- `clinical/alignment.py`: `align_features_to_clinical(daily, clinical, *,
+  preceding_windows_days=(1, 3, 7), same_day=True)` gives one row per assessment with
+  mean/median/weighted mean, valid-day counts and mean `completeness_weight` per window.
+  The assessment day is excluded from the preceding windows.
+- Tests: `test_baseline_clinical.py` (9). Coverage: `baseline/` 99 %, `clinical/` 100 %.
+
+### Registry
+- Generic derived entries `robust_z` and `deviation`.
+
+### References
+Leys et al. 2013 (MAD scaling).
