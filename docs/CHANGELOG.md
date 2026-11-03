@@ -176,3 +176,44 @@ Specifications: `docs/features/screen.md`, `docs/features/sleep.md`.
 ### References
 Borger, Huber & Ghosh 2019 (npj Digit Med 2:73); Apple HealthKit
 `HKCategoryValueSleepAnalysis`.
+
+## Phase 5 — GPS upgrades
+
+Specification: `docs/features/gps.md`. The existing chain is extended, not rewritten.
+
+### Added
+- `features/gps_geometry.py`: `haversine_m` (latitude first), `project_local_m` (local
+  equirectangular, `cos(radians(lat0))`), `edge_midpoints`.
+- `features/gps_jitter.py`: `filter_gps_jitter(gps, *, accuracy_max_m=100.0,
+  max_speed_kmh=250.0)` → `(filtered, n_dropped_by_reason)`. Reasons:
+  `missing_coordinates`, `invalid_coordinates`, `accuracy_exceeds_max`, `speed_spike`.
+- `features/gps_stays.py`: `build_stays(anchor_episodes, *, sampling_interval_ms,
+  r_stay_m=50.0, t_floor_ms=600_000, dwell_multiplier=3.0)`, with dynamic dwell threshold
+  `max(t_floor_ms, dwell_multiplier × sampling_interval_ms)` on observed duration.
+- `features/gps_home.py`: `infer_home_location(assignments, places, *, tz,
+  reference_days=14, min_nights=5, night_start_local="00:00", night_end_local="06:00",
+  min_night_observed_ms=7_200_000, min_confidence=0.5, r_min_m=50.0)` (episode-level
+  night-majority home with `home_confidence`, `home_status` and `home_reason`), and
+  `compute_daily_home_time(edges, home, *, r_min_m=50.0, min_supported_ms=21_600_000)`.
+- `features/gps_activity_space.py`: `convex_hull`, `convex_hull_area_km2`,
+  `standard_deviational_ellipse` and `compute_daily_activity_space(edges, *,
+  min_supported_ms=21_600_000, median_accuracy_m=None)`. Areas at or below the squared
+  median accuracy are `observed_zero`.
+- `features/gps_routine.py`: `location_novelty_fraction` (28-day history, 7 history days
+  required), `hourly_place_sequence` and `routine_index` (7-day window,
+  `min_shared_hours=12`, `min_days=3`). DST days are merged by clock hour.
+- `features/gps_circadian_movement.py`: `compute_circadian_movement(edges, *,
+  period_band_h=(23.5, 24.5), n_periods=11, min_supported_ms=43_200_000,
+  min_span_ms=86_400_000)`, after Saeb et al. 2015.
+- Tests: `test_gps_jitter_stays.py`, `test_gps_home.py`, `test_gps_activity_space.py`,
+  `test_gps_routine_circadian.py` (31), plus the `tests/gps_synthetic.py` helper. Coverage
+  of the new modules is 100 %.
+
+### Registry
+- 9 entries: `home_time_ms`, `home_time_fraction`, `convex_hull_area_km2`,
+  `sde_area_km2`, `anisotropy`, `major_axis_bearing_deg`, `location_novelty_fraction`,
+  `routine_index`, `circadian_movement`. Legacy `hometime` (engine `cortex`) is unchanged.
+
+### References
+Andrew 1979; Barnett & Onnela 2020; Canzian & Musolesi 2015; Lefever 1926; Saeb et al. 2015;
+Sherman et al. 2005.

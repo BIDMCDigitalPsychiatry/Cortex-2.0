@@ -527,3 +527,131 @@ features:
     minimum_observability: ">= 1 in_awake segment"
     reliability_threshold: null
     reference: Apple HealthKit HKCategoryValueSleepAnalysis
+
+  # --- Phase 5: GPS upgrades (docs/features/gps.md) ---
+
+  home_time_ms:
+    display_name: Time at inferred home
+    category: mobility
+    source_stream: gps
+    engine: cortex2
+    native: true
+    module: gps_home
+    unit: milliseconds
+    personalized: true
+    reliability_metric: supported_duration_ms
+    minimum_observability: "6 h supported GPS + observed home record"
+    reliability_threshold: null
+    reference: Barnett & Onnela 2020; GPS design doc §4
+
+  home_time_fraction:
+    display_name: Share of supported time at home
+    category: mobility
+    source_stream: gps
+    engine: cortex2
+    native: true
+    module: gps_home
+    unit: fraction
+    personalized: true
+    reliability_metric: supported_duration_ms
+    minimum_observability: "6 h supported GPS + observed home record"
+    reliability_threshold: null
+    reference: Barnett & Onnela 2020; GPS design doc §4
+
+  convex_hull_area_km2:
+    display_name: Activity space (convex hull)
+    category: mobility
+    source_stream: gps
+    engine: cortex2
+    native: true
+    module: gps_activity_space
+    unit: square_kilometers
+    personalized: true
+    reliability_metric: supported_duration_ms
+    minimum_observability: "6 h supported GPS"
+    reliability_threshold: null
+    reference: Andrew 1979
+
+  sde_area_km2:
+    display_name: Activity space (standard deviational ellipse)
+    category: mobility
+    source_stream: gps
+    engine: cortex2
+    native: true
+    module: gps_activity_space
+    unit: square_kilometers
+    personalized: true
+    reliability_metric: supported_duration_ms
+    minimum_observability: "6 h supported GPS"
+    reliability_threshold: null
+    reference: Lefever 1926; Sherman 2005
+
+  anisotropy:
+    display_name: Activity-space anisotropy
+    category: mobility
+    source_stream: gps
+    engine: cortex2
+    native: true
+    module: gps_activity_space
+    unit: fraction
+    personalized: true
+    reliability_metric: supported_duration_ms
+    minimum_observability: "6 h supported GPS"
+    reliability_threshold: null
+    reference: Sherman 2005
+
+  major_axis_bearing_deg:
+    display_name: Activity-space major-axis bearing
+    category: mobility
+    source_stream: gps
+    engine: cortex2
+    native: true
+    module: gps_activity_space
+    unit: degrees
+    personalized: true
+    reliability_metric: supported_duration_ms
+    minimum_observability: "6 h supported GPS"
+    reliability_threshold: null
+    reference: Sherman 2005
+
+  location_novelty_fraction:
+    display_name: Location novelty
+    category: mobility
+    source_stream: gps
+    engine: cortex2
+    native: true
+    module: gps_routine
+    unit: fraction
+    personalized: true
+    reliability_metric: novelty_supported_ms
+    minimum_observability: "6 h assigned time + 7 history days"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work; definition in docs/features/gps.md)
+
+  routine_index:
+    display_name: Routine index
+    category: mobility
+    source_stream: gps
+    engine: cortex2
+    native: true
+    module: gps_routine
+    unit: fraction
+    personalized: true
+    reliability_metric: routine_n_days
+    minimum_observability: "3 comparison days with >= 12 shared hours"
+    reliability_threshold: null
+    reference: Canzian & Musolesi 2015
+
+  circadian_movement:
+    display_name: Circadian movement
+    category: mobility
+    source_stream: gps
+    engine: cortex2
+    native: true
+    module: gps_circadian_movement
+    unit: log_energy
+    personalized: true
+    reliability_metric: supported_duration_ms
+    minimum_observability: "12 h supported GPS spanning >= 24 h"
+    reliability_threshold: null
+    reference: Saeb 2015
