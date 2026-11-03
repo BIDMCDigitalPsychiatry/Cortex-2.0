@@ -1,0 +1,37 @@
+name: sleep
+version: '1.0'
+
+description: >
+  Wearable or platform-reported sleep segments (for example HealthKit sleep
+  analysis). A row covers [timestamp_ms, timestamp_ms + duration_ms). These are
+  device classifications, not phone-derived estimates; see
+  features/sleep_window.py for the phone-derived sleep window.
+
+required:
+  study_id: string
+  timestamp_ms: int64
+  timestamp_utc: datetime_utc
+  representation: string
+  duration_ms: float64
+  source_platform: string
+  source_stream: string
+  source_participant_id: string
+
+optional:
+  participant_id: string
+  episode_id: string
+  device_id: string
+  source_file: string
+  source_record_id: string
+  representation_original: string
+
+allowed_values:
+  representation:
+  - in_bed
+  - in_sleep
+  - in_awake
+  - unknown
+
+constraints:
+  duration_ms:
+    min: 0

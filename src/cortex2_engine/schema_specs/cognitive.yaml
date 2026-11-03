@@ -1,0 +1,31 @@
+name: cognitive
+version: '1.0'
+
+description: >
+  One row per trial (tap/response) of a smartphone cognitive task. Task names are
+  normalised to snake_case (for example jewels_a, jewels_b, trails_b,
+  spatial_span); the set is open, so task is not restricted to a fixed list.
+
+required:
+  study_id: string
+  timestamp_ms: int64
+  timestamp_utc: datetime_utc
+  task: string
+  session_id: string
+  source_platform: string
+  source_stream: string
+  source_participant_id: string
+
+optional:
+  participant_id: string
+  episode_id: string
+  device_id: string
+  source_file: string
+  source_record_id: string
+  level: float64
+  response_time_ms: float64
+  correct: boolean
+
+constraints:
+  response_time_ms:
+    min: 0

@@ -1,0 +1,29 @@
+name: steps
+version: '1.0'
+
+description: >
+  Device-reported step counts. A row covers [timestamp_ms, timestamp_ms +
+  interval_duration_ms) when the interval is known; otherwise it is a point count.
+
+required:
+  study_id: string
+  timestamp_ms: int64
+  timestamp_utc: datetime_utc
+  step_count: float64
+  source_platform: string
+  source_stream: string
+  source_participant_id: string
+
+optional:
+  participant_id: string
+  episode_id: string
+  device_id: string
+  source_file: string
+  source_record_id: string
+  interval_duration_ms: float64
+
+constraints:
+  step_count:
+    min: 0
+  interval_duration_ms:
+    min: 0

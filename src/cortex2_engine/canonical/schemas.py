@@ -14,7 +14,13 @@ SCHEMA_NAMES = {
     "clinical_windows",
 
     "device_usage",
-    "nearby_device",}
+    "nearby_device",
+    "telephony",
+    "survey",
+    "cognitive",
+    "steps",
+    "sleep",
+}
 
 
 def load_schema(name: str) -> dict:

@@ -198,6 +198,48 @@ def _check_allowed_events(
         )
 
 
+def _check_allowed_values(
+    df: pd.DataFrame,
+    schema: dict,
+    report: ValidationReport,
+):
+    """Check categorical columns declared under ``allowed_values``.
+
+    Generalises ``allowed_events`` to any column. Missing values are left to
+    the required-null check.
+    """
+
+    allowed_values = schema.get(
+        "allowed_values",
+        {},
+    )
+
+    for col, allowed in allowed_values.items():
+
+        if col not in df.columns:
+            continue
+
+        invalid = (
+            ~df[col].isin(allowed)
+            & df[col].notna()
+        )
+
+        n = int(invalid.sum())
+
+        if n:
+            values = (
+                df.loc[invalid, col]
+                .astype(str)
+                .unique()[:10]
+                .tolist()
+            )
+
+            report.add_error(
+                f"{col}: {n} values outside {allowed}. "
+                f"Examples: {values}"
+            )
+
+
 def validate_canonical(
     df: pd.DataFrame,
     schema_name: str,
@@ -244,6 +286,12 @@ def validate_canonical(
     )
 
     _check_allowed_events(
+        df,
+        schema,
+        report,
+    )
+
+    _check_allowed_values(
         df,
         schema,
         report,

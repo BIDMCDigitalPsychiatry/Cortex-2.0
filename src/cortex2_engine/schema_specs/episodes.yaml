@@ -19,3 +19,7 @@ required:
 optional:
   window_name: string
   source_platform: string
+  # Operating system of the sensing device (ios | android | unknown). Needed to
+  # tell a stream that cannot exist on a platform (source_absent) from one that
+  # simply recorded nothing (no_raw_data), e.g. telephony on iOS.
+  device_os: string

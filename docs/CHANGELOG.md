@@ -29,3 +29,38 @@ reported 68 findings.
 ### Changed
 - Dev extra: `pytest-cov>=5` added; `ruff>=0.17` (the version whose default rule set
   defines "ruff clean" for this work).
+
+## Phase 1 — Schemas and adapter branches
+
+### Added
+- Canonical schemas `telephony`, `survey`, `cognitive`, `steps`, `sleep`
+  (`src/cortex2_engine/schema_specs/*.yaml`), registered in `canonical/schemas.py`.
+  - `telephony`: `channel` ∈ {call, sms, unknown}, `direction` ∈ {incoming, outgoing,
+    missed, unknown}, `duration_ms`, `contact_hash`.
+  - `survey`: `instrument`, `item`, `value_numeric`, `value_text`, `response_latency_ms`,
+    `activity_id` (one row per answered item; scoring is a feature, not an adapter step).
+  - `cognitive`: `task` (open snake_case set: jewels_a, jewels_b, trails_b, spatial_span…),
+    `session_id`, `level`, `response_time_ms`, `correct`.
+  - `steps`: `step_count`, optional `interval_duration_ms`.
+  - `sleep`: `representation` ∈ {in_bed, in_sleep, in_awake, unknown}, `duration_ms`.
+- **Battery decision:** no `battery` schema. Battery rides on
+  `screen.battery_level_fraction` (already produced by the adapter and consumed by
+  `missingness/hourly_context.py`).
+- `episodes` schema: optional `device_os` (ios | android | unknown), required to emit
+  `source_absent` for platform-impossible streams (telephony on iOS).
+- `validation.py`: generic `allowed_values` check (any categorical column), alongside the
+  existing `allowed_events`.
+- `MindLAMPAdapter`: `_telephony`, `_survey`, `_cognitive`, `_steps`, `_sleep`; a
+  `_builder()` dispatch table replaces the if/elif chain; `_pseudonymous_hash(kind,
+  value)` is the single hashing primitive (blake2b-128 over
+  `study_id|source_platform|kind|value`). `_nearby_identifier_hash` delegates to it and its
+  output is byte-identical (tested). Telephony counterparts are digit-normalised and hashed
+  in one `telephony_contact` namespace, so one person has one token across calls and SMS.
+- Unit conversions made explicit: mindLAMP `call_duration` (seconds) → `duration_ms`.
+  Direction codes follow Android `CallLog.Calls.TYPE` / `Telephony.Sms.TYPE`. Sleep codes
+  follow HealthKit `HKCategoryValueSleepAnalysis`.
+- Tests: `tests/test_mindlamp_adapter_new_streams.py` (13) with fixture CSVs under
+  `tests/fixtures/mindlamp/`.
+
+### Registry
+- No change: this phase adds streams, not features.

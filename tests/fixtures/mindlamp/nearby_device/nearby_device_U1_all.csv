@@ -1,0 +1,3 @@
+timestamp,type,address,strength
+1772884800000,WiFi,aa:bb:cc:dd:ee:ff,-60
+1772884860000,bluetooth,,-70

@@ -1,0 +1,5 @@
+timestamp,representation,duration
+1772852400000,in_bed,28800000
+1772854200000,asleep,21600000
+1772875800000,2,600000
+1772876400000,HKCategoryValueSleepAnalysisAsleepREM,1800000
