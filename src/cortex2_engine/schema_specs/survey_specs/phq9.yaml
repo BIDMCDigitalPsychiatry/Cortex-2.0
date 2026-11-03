@@ -1,0 +1,27 @@
+# PHQ-9 (Kroenke, Spitzer & Williams 2001). Items 1-9 summed, 0-27.
+# The 10th "difficulty" question is not part of the score and is ignored.
+# Missing items: score requires >= 7 of 9 valid items; no pro-rating.
+instrument: PHQ-9
+instrument_aliases: [PHQ9, phq_9, phq9]
+reference: Kroenke 2001
+category_list: [total]
+item_min: 0
+item_max: 3
+min_items:
+  total: 7
+maps:
+  frequency:
+    not at all: 0
+    several days: 1
+    more than half the days: 2
+    nearly every day: 3
+questions:
+  Little interest or pleasure in doing things: {category: total, map: frequency, aliases: [phq9_1]}
+  Feeling down, depressed, or hopeless: {category: total, map: frequency, aliases: [phq9_2]}
+  Trouble falling or staying asleep, or sleeping too much: {category: total, map: frequency, aliases: [phq9_3]}
+  Feeling tired or having little energy: {category: total, map: frequency, aliases: [phq9_4]}
+  Poor appetite or overeating: {category: total, map: frequency, aliases: [phq9_5]}
+  Feeling bad about yourself - or that you are a failure or have let yourself or your family down: {category: total, map: frequency, aliases: [phq9_6, Feeling bad about yourself or that you are a failure or have let yourself or your family down]}
+  Trouble concentrating on things, such as reading the newspaper or watching television: {category: total, map: frequency, aliases: [phq9_7]}
+  Moving or speaking so slowly that other people could have noticed? Or the opposite - being so fidgety or restless that you have been moving around a lot more than usual: {category: total, map: frequency, aliases: [phq9_8, Moving or speaking so slowly that other people could have noticed or the opposite being so fidgety or restless that you have been moving around a lot more than usual]}
+  Thoughts that you would be better off dead or of hurting yourself in some way: {category: total, map: frequency, aliases: [phq9_9]}

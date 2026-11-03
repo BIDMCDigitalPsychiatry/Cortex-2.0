@@ -217,3 +217,38 @@ Specification: `docs/features/gps.md`. The existing chain is extended, not rewri
 ### References
 Andrew 1979; Barnett & Onnela 2020; Canzian & Musolesi 2015; Lefever 1926; Saeb et al. 2015;
 Sherman et al. 2005.
+
+## Phase 6 — Communication, cognition and surveys
+
+Specifications: `docs/features/communication.md`, `docs/features/cognition_surveys.md`.
+
+### Added
+- `features/communication.py`: `compute_communication_features(telephony, *,
+  window_start_ms, window_end_ms, device_os=None, source_observed_ms=None,
+  stream_active_in_episode=False, min_observed_ms=43_200_000, suffix="")`, with daily and
+  7-day wrappers. Provides counts and durations by channel and direction,
+  `n_unique_contacts`, `communication_reciprocity`, `communication_entropy_nats` and
+  `outgoing_fraction`. `source_absent` on iOS; zero counts need evidence that the logger
+  ran.
+- `features/anchors.py`: `build_daily_anchors(*, date, tz, sleep, screen_events,
+  gps_edges, home, telephony, earliest_local="04:00")` giving sleep offset, first
+  unlock, first home departure, and first/last communication.
+- `features/social_rhythm.py`: `social_rhythm_regularity(anchors_long, *, window_days=7,
+  min_days_per_anchor=4, regular_threshold_min=45.0, min_anchors=2)` using
+  `circular_mean_hours` / `circular_sd_hours`.
+- `features/cognitive_variability.py`: per-session `rt_cov`, `rt_tau_ms`
+  (method-of-moments ex-Gaussian) and `rt_slope_ms_per_trial` (`min_trials=8`,
+  `rt_min_ms=150`, `rt_max_multiple_of_median=3.0`), plus weekly medians.
+- `features/survey_scoring.py`: pydantic `SurveyScoringSpec` (`category_list`,
+  `questions`, `maps`, `reverse_items`, `min_items`), `score_surveys` and
+  `load_builtin_spec`. Built-in `schema_specs/survey_specs/{phq9,gad7}.yaml` are added
+  to package data.
+- Tests: `test_communication.py`, `test_anchors_social_rhythm.py`,
+  `test_cognitive_survey.py` (26).
+
+### Registry
+- 14 entries (communication 7, social rhythm 2, cognition 3, PHQ-9 and GAD-7 totals).
+
+### References
+Monk et al. 1990; Shannon 1948; MacDonald et al. 2006; Olivier & Norberg 2010; Kroenke et
+al. 2001; Spitzer et al. 2006.

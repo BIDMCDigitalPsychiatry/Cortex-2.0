@@ -1,0 +1,24 @@
+# GAD-7 (Spitzer, Kroenke, Williams & Löwe 2006). Items 1-7 summed, 0-21.
+# Missing items: score requires >= 5 of 7 valid items; no pro-rating.
+instrument: GAD-7
+instrument_aliases: [GAD7, gad_7, gad7]
+reference: Spitzer 2006
+category_list: [total]
+item_min: 0
+item_max: 3
+min_items:
+  total: 5
+maps:
+  frequency:
+    not at all: 0
+    several days: 1
+    more than half the days: 2
+    nearly every day: 3
+questions:
+  Feeling nervous, anxious, or on edge: {category: total, map: frequency, aliases: [gad7_1]}
+  Not being able to stop or control worrying: {category: total, map: frequency, aliases: [gad7_2]}
+  Worrying too much about different things: {category: total, map: frequency, aliases: [gad7_3]}
+  Trouble relaxing: {category: total, map: frequency, aliases: [gad7_4]}
+  Being so restless that it is hard to sit still: {category: total, map: frequency, aliases: [gad7_5]}
+  Becoming easily annoyed or irritable: {category: total, map: frequency, aliases: [gad7_6]}
+  Feeling afraid, as if something awful might happen: {category: total, map: frequency, aliases: [gad7_7]}

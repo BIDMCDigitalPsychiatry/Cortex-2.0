@@ -655,3 +655,201 @@ features:
     minimum_observability: "12 h supported GPS spanning >= 24 h"
     reliability_threshold: null
     reference: Saeb 2015
+
+  # --- Phase 6: communication, rhythm, cognition, surveys (docs/features/communication.md, cognition_surveys.md) ---
+
+  call_count:
+    display_name: Calls
+    category: communication
+    source_stream: telephony
+    engine: cortex2
+    native: true
+    module: communication
+    unit: count_per_day
+    personalized: true
+    reliability_metric: telephony_n_records
+    minimum_observability: "logger evidence: stream active + 12 h observed"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  call_duration_ms:
+    display_name: Call duration
+    category: communication
+    source_stream: telephony
+    engine: cortex2
+    native: true
+    module: communication
+    unit: milliseconds
+    personalized: true
+    reliability_metric: telephony_n_records
+    minimum_observability: "logger evidence: stream active + 12 h observed"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  sms_count:
+    display_name: Text messages
+    category: communication
+    source_stream: telephony
+    engine: cortex2
+    native: true
+    module: communication
+    unit: count_per_day
+    personalized: true
+    reliability_metric: telephony_n_records
+    minimum_observability: "logger evidence: stream active + 12 h observed"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  n_unique_contacts:
+    display_name: Unique contacts
+    category: communication
+    source_stream: telephony
+    engine: cortex2
+    native: true
+    module: communication
+    unit: count_per_day
+    personalized: true
+    reliability_metric: telephony_n_records
+    minimum_observability: "logger evidence: stream active + 12 h observed"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  communication_reciprocity:
+    display_name: Communication reciprocity
+    category: communication
+    source_stream: telephony
+    engine: cortex2
+    native: true
+    module: communication
+    unit: fraction
+    personalized: true
+    reliability_metric: n_unique_contacts
+    minimum_observability: ">= 1 hashed contact"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  communication_entropy_nats:
+    display_name: Communication entropy
+    category: communication
+    source_stream: telephony
+    engine: cortex2
+    native: true
+    module: communication
+    unit: nats
+    personalized: true
+    reliability_metric: n_unique_contacts
+    minimum_observability: ">= 1 hashed contact"
+    reliability_threshold: null
+    reference: Shannon 1948
+
+  outgoing_fraction:
+    display_name: Outgoing communication fraction
+    category: communication
+    source_stream: telephony
+    engine: cortex2
+    native: true
+    module: communication
+    unit: fraction
+    personalized: true
+    reliability_metric: telephony_n_records
+    minimum_observability: ">= 1 incoming or outgoing event"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  social_rhythm_regularity:
+    display_name: Social rhythm regularity
+    category: rhythm
+    source_stream: screen+gps+telephony+accelerometer
+    engine: cortex2
+    native: true
+    module: social_rhythm
+    unit: fraction
+    personalized: true
+    reliability_metric: social_rhythm_n_anchors
+    minimum_observability: ">= 2 anchors with >= 4 days in 7"
+    reliability_threshold: null
+    reference: Monk 1990
+
+  social_rhythm_mean_circular_sd_h:
+    display_name: Anchor-time circular SD
+    category: rhythm
+    source_stream: screen+gps+telephony+accelerometer
+    engine: cortex2
+    native: true
+    module: social_rhythm
+    unit: hours
+    personalized: true
+    reliability_metric: social_rhythm_n_anchors
+    minimum_observability: ">= 2 anchors with >= 4 days in 7"
+    reliability_threshold: null
+    reference: Monk 1990
+
+  rt_cov:
+    display_name: Reaction-time coefficient of variation
+    category: cognition
+    source_stream: cognitive
+    engine: cortex2
+    native: true
+    module: cognitive_variability
+    unit: fraction
+    personalized: true
+    reliability_metric: n_trials_kept
+    minimum_observability: ">= 8 kept trials per session"
+    reliability_threshold: null
+    reference: MacDonald 2006
+
+  rt_tau_ms:
+    display_name: Reaction-time ex-Gaussian tau
+    category: cognition
+    source_stream: cognitive
+    engine: cortex2
+    native: true
+    module: cognitive_variability
+    unit: milliseconds
+    personalized: true
+    reliability_metric: n_trials_kept
+    minimum_observability: ">= 8 kept trials, positive skew"
+    reliability_threshold: null
+    reference: Olivier & Norberg 2010
+
+  rt_slope_ms_per_trial:
+    display_name: Within-session reaction-time slope
+    category: cognition
+    source_stream: cognitive
+    engine: cortex2
+    native: true
+    module: cognitive_variability
+    unit: milliseconds_per_trial
+    personalized: true
+    reliability_metric: n_trials_kept
+    minimum_observability: ">= 8 kept trials per session"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  phq9_total:
+    display_name: PHQ-9 total
+    category: survey
+    source_stream: survey
+    engine: cortex2
+    native: true
+    module: survey_scoring
+    unit: points_0_27
+    personalized: true
+    reliability_metric: n_items_valid
+    minimum_observability: ">= 7 of 9 items"
+    reliability_threshold: null
+    reference: Kroenke 2001
+
+  gad7_total:
+    display_name: GAD-7 total
+    category: survey
+    source_stream: survey
+    engine: cortex2
+    native: true
+    module: survey_scoring
+    unit: points_0_21
+    personalized: true
+    reliability_metric: n_items_valid
+    minimum_observability: ">= 5 of 7 items"
+    reliability_threshold: null
+    reference: Spitzer 2006
