@@ -53,7 +53,7 @@ def test_regular_observations_create_one_supported_segment():
         max_gap_ms=1 * MINUTE,
     )
 
-    assert result["status"] == "observed_value"
+    assert result["status"] == "observed"
     assert result["n_observations"] == 5
     assert result["n_supported_edges"] == 4
     assert result["n_observable_segments"] == 1

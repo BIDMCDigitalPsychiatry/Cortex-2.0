@@ -37,11 +37,24 @@ def test_empty_supported_evidence():
         edges
     )
 
-    assert (
+    # No supported time: distance is unknown, not a behavioural zero.
+    assert np.isnan(
         result[
             "supported_displacement_distance_m"
         ]
-        == 0.0
+    )
+
+    assert (
+        result[
+            "supported_displacement_distance_m_status"
+        ]
+        == "insufficient_observability"
+    )
+
+    assert np.isnan(
+        result[
+            "implausible_transition_fraction"
+        ]
     )
 
     assert (
@@ -191,4 +204,63 @@ def test_missing_columns_raise():
                     "supported": [True],
                 }
             )
+        )
+
+
+def _stationary_edges(duration_ms):
+    edges = pd.DataFrame(
+        {
+            "supported": [True],
+            "duration_ms": [duration_ms],
+            "start_latitude": [42.0],
+            "start_longitude": [-71.0],
+            "end_latitude": [42.0],
+            "end_longitude": [-71.0],
+            "distance_m": [0.0],
+            "spatial_status": [SPATIAL_STATUS_ACCURACY_OVERLAP],
+        }
+    )
+
+    return add_gps_trajectory_plausibility(edges)
+
+
+def test_observed_stationary_day_is_observed_zero():
+
+    result = compute_daily_mobility_features(
+        _stationary_edges(3_600_000)
+    )
+
+    assert result["supported_displacement_distance_m"] == 0.0
+    assert (
+        result["supported_displacement_distance_m_status"]
+        == "observed_zero"
+    )
+    assert result["supported_radius_of_gyration_m_status"] == "observed_zero"
+
+    # No displacement candidates: undefined, not zero.
+    assert np.isnan(result["implausible_transition_fraction"])
+    assert result["implausible_transition_fraction_status"] == "not_applicable"
+
+
+def test_minimum_supported_duration_gates_values():
+
+    result = compute_daily_mobility_features(
+        _stationary_edges(3_600_000),
+        minimum_supported_duration_ms=2 * 3_600_000,
+    )
+
+    assert np.isnan(result["supported_displacement_distance_m"])
+    assert (
+        result["supported_displacement_distance_m_status"]
+        == "insufficient_observability"
+    )
+    assert result["spatially_supported_duration_ms"] == 3_600_000
+
+
+def test_negative_minimum_raises():
+
+    with pytest.raises(ValueError):
+        compute_daily_mobility_features(
+            _stationary_edges(60_000),
+            minimum_supported_duration_ms=-1,
         )

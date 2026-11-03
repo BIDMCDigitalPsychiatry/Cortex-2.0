@@ -30,6 +30,8 @@ from collections.abc import Iterable
 from statistics import median
 from typing import Any
 
+from cortex2_engine.features.status import FeatureStatus
+
 
 def _coerce_timestamp(value: Any) -> int | None:
     """Convert a timestamp-like value to integer milliseconds."""
@@ -230,7 +232,7 @@ def compute_gps_temporal_observability(
     if not timestamps:
         return {
             "status":
-                "no_raw_data",
+                FeatureStatus.NO_RAW_DATA.value,
             "window_start_ms":
                 window_start_ms,
             "window_end_ms":
@@ -355,11 +357,11 @@ def compute_gps_temporal_observability(
 
     if not observed_segments:
         status = (
-            "insufficient_observability"
+            FeatureStatus.INSUFFICIENT_OBSERVABILITY.value
         )
     else:
         status = (
-            "observed_value"
+            FeatureStatus.OBSERVED.value
         )
 
     return {

@@ -21,10 +21,16 @@ from cortex2_engine.features.gps_trajectory_plausibility import (
     TRAJECTORY_STATUS_IMPLAUSIBLE_SPEED,
     TRAJECTORY_STATUS_PLAUSIBLE_DISPLACEMENT,
 )
+from cortex2_engine.features.status import (
+    gated_value,
+    status_from_counts,
+)
 
 
 def compute_daily_mobility_features(
     edges: pd.DataFrame,
+    *,
+    minimum_supported_duration_ms: float = 0.0,
 ) -> dict:
     """Compute conservative daily GPS mobility summaries.
 
@@ -43,12 +49,19 @@ def compute_daily_mobility_features(
         - distance_m
         - trajectory_status
 
+    minimum_supported_duration_ms
+        Minimum spatially supported time for the distance, radius and
+        implausible-fraction values to be interpreted. Default 0 keeps the
+        historical behaviour of accepting any positive supported time.
+
     Returns
     -------
     dict
-        - supported_displacement_distance_m
-        - supported_radius_of_gyration_m
-        - displacement_edge_count
+        - supported_displacement_distance_m (+ ``_status``)
+        - supported_radius_of_gyration_m (+ ``_status``)
+        - implausible_transition_fraction (+ ``_status``)
+        - displacement_edge_count, implausible_transition_count
+          (evidence counts, always reported)
         - spatially_supported_duration_ms
 
     Notes
@@ -153,11 +166,12 @@ def compute_daily_mobility_features(
         + implausible_transition_count
     )
 
+    # No displacement candidates: the fraction is undefined, not zero.
     implausible_transition_fraction = (
         implausible_transition_count
         / displacement_candidate_count
         if displacement_candidate_count > 0
-        else 0.0
+        else np.nan
     )
 
     valid_spatial = (
@@ -265,12 +279,47 @@ def compute_daily_mobility_features(
             )
         )
 
+    if minimum_supported_duration_ms < 0:
+        raise ValueError(
+            "minimum_supported_duration_ms must be >= 0"
+        )
+
+    distance_status = status_from_counts(
+        spatially_supported_duration_ms,
+        minimum_supported_duration_ms,
+        supported_displacement_distance_m,
+    )
+
+    radius_status = status_from_counts(
+        spatially_supported_duration_ms,
+        minimum_supported_duration_ms,
+        radius_of_gyration_m,
+    )
+
+    fraction_status = status_from_counts(
+        spatially_supported_duration_ms,
+        minimum_supported_duration_ms,
+        implausible_transition_fraction,
+    )
+
     return {
         "supported_displacement_distance_m":
-            supported_displacement_distance_m,
+            gated_value(
+                supported_displacement_distance_m,
+                distance_status,
+            ),
+
+        "supported_displacement_distance_m_status":
+            distance_status.value,
 
         "supported_radius_of_gyration_m":
-            radius_of_gyration_m,
+            gated_value(
+                radius_of_gyration_m,
+                radius_status,
+            ),
+
+        "supported_radius_of_gyration_m_status":
+            radius_status.value,
 
         "displacement_edge_count":
             displacement_edge_count,
@@ -279,7 +328,13 @@ def compute_daily_mobility_features(
             implausible_transition_count,
 
         "implausible_transition_fraction":
-            implausible_transition_fraction,
+            gated_value(
+                implausible_transition_fraction,
+                fraction_status,
+            ),
+
+        "implausible_transition_fraction_status":
+            fraction_status.value,
 
         "spatially_supported_duration_ms":
             spatially_supported_duration_ms,

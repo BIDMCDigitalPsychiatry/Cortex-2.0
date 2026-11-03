@@ -80,7 +80,7 @@ def test_contiguous_mask_is_single_block():
 def test_point_inside_missing_bin_removed():
 
     points = pd.DataFrame({
-        "timestamp": [
+        "timestamp_ms": [
             1 * MINUTE,
             6 * MINUTE,
             11 * MINUTE,
@@ -112,7 +112,7 @@ def test_point_inside_missing_bin_removed():
     )
 
     assert result[
-        "timestamp"
+        "timestamp_ms"
     ].tolist() == [
         1 * MINUTE,
         11 * MINUTE,
@@ -122,7 +122,7 @@ def test_point_inside_missing_bin_removed():
 def test_duplicate_points_in_missing_bin_all_removed():
 
     points = pd.DataFrame({
-        "timestamp": [
+        "timestamp_ms": [
             6 * MINUTE,
             6 * MINUTE,
         ]
@@ -183,4 +183,37 @@ def test_invalid_pattern_raises():
             pattern="bad",
             bin_size_ms=5 * MINUTE,
             seed=1,
+        )
+
+
+def test_legacy_timestamp_points_warn_and_keep_columns():
+
+    points = pd.DataFrame({
+        "timestamp": [1 * MINUTE, 6 * MINUTE],
+        "latitude": [0.0, 0.0],
+        "longitude": [0.0, 0.0],
+    })
+
+    with pytest.warns(DeprecationWarning):
+        result = apply_missing_bin_mask_to_points(
+            points,
+            window_start_ms=0,
+            window_end_ms=10 * MINUTE,
+            bin_size_ms=5 * MINUTE,
+            missing_mask=np.array([False, True]),
+        )
+
+    assert result.columns.tolist() == points.columns.tolist()
+    assert result["timestamp"].tolist() == [1 * MINUTE]
+
+
+def test_points_without_timestamp_raise():
+
+    with pytest.raises(ValueError):
+        apply_missing_bin_mask_to_points(
+            pd.DataFrame({"latitude": [0.0]}),
+            window_start_ms=0,
+            window_end_ms=10 * MINUTE,
+            bin_size_ms=5 * MINUTE,
+            missing_mask=np.array([False, True]),
         )

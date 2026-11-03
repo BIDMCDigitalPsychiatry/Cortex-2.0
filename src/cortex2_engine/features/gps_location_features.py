@@ -13,6 +13,8 @@ import math
 import numpy as np
 import pandas as pd
 
+from cortex2_engine.features.status import FeatureStatus
+
 
 def compute_daily_location_features(
     assignments: pd.DataFrame,
@@ -103,7 +105,7 @@ def compute_daily_location_features(
                 np.nan,
 
             "location_entropy_status":
-                "insufficient_observability",
+                FeatureStatus.INSUFFICIENT_OBSERVABILITY.value,
 
             "effective_number_places":
                 np.nan,
@@ -118,7 +120,7 @@ def compute_daily_location_features(
                 np.nan,
 
             "dominant_place_status":
-                "insufficient_observability",
+                FeatureStatus.INSUFFICIENT_OBSERVABILITY.value,
 
             "n_observed_places":
                 0,
@@ -262,9 +264,9 @@ def compute_daily_location_features(
 
         "location_entropy_status":
             (
-                "observed_zero"
+                FeatureStatus.OBSERVED_ZERO.value
                 if entropy == 0.0
-                else "observed_value"
+                else FeatureStatus.OBSERVED.value
             ),
 
         "effective_number_places":
@@ -280,7 +282,7 @@ def compute_daily_location_features(
             dominant_place_fraction,
 
         "dominant_place_status":
-            "observed_value",
+            FeatureStatus.OBSERVED.value,
 
         "n_observed_places":
             len(

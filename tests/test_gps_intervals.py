@@ -40,7 +40,7 @@ def test_haversine_known_distance():
 
 def test_regular_points_create_supported_edges():
     gps = pd.DataFrame({
-        "timestamp": [
+        "timestamp_ms": [
             0,
             MINUTE,
             2 * MINUTE,
@@ -74,7 +74,7 @@ def test_regular_points_create_supported_edges():
 
 def test_long_gap_is_preserved_but_marked_unsupported():
     gps = pd.DataFrame({
-        "timestamp": [
+        "timestamp_ms": [
             0,
             MINUTE,
             10 * MINUTE,
@@ -116,7 +116,7 @@ def test_long_gap_is_preserved_but_marked_unsupported():
 
 def test_duplicate_timestamp_does_not_create_zero_time_edge():
     gps = pd.DataFrame({
-        "timestamp": [
+        "timestamp_ms": [
             0,
             0,
             MINUTE,
@@ -150,7 +150,7 @@ def test_duplicate_timestamp_does_not_create_zero_time_edge():
 
 def test_end_boundary_is_excluded():
     gps = pd.DataFrame({
-        "timestamp": [
+        "timestamp_ms": [
             0,
             MINUTE,
             2 * MINUTE,
@@ -184,7 +184,7 @@ def test_end_boundary_is_excluded():
 
 def test_speed_units_are_kmh():
     gps = pd.DataFrame({
-        "timestamp": [
+        "timestamp_ms": [
             0,
             3_600_000,
         ],
@@ -219,7 +219,7 @@ def test_speed_units_are_kmh():
 def test_empty_input_returns_empty_schema():
     gps = pd.DataFrame(
         columns=[
-            "timestamp",
+            "timestamp_ms",
             "latitude",
             "longitude",
         ]
@@ -245,11 +245,62 @@ def test_empty_input_returns_empty_schema():
 
 def test_missing_required_column_raises():
     gps = pd.DataFrame({
-        "timestamp": [0],
+        "timestamp_ms": [0],
         "latitude": [42.0],
     })
 
     with pytest.raises(ValueError):
+        build_gps_intervals(
+            gps,
+            window_start_ms=0,
+            window_end_ms=MINUTE,
+            max_gap_ms=MINUTE,
+        )
+
+
+def test_legacy_timestamp_column_warns_and_matches():
+
+    canonical = pd.DataFrame({
+        "timestamp_ms": [0, MINUTE, 2 * MINUTE],
+        "latitude": [42.0, 42.0, 42.001],
+        "longitude": [-71.0, -71.0, -71.0],
+        "accuracy_m": [5.0, 5.0, 5.0],
+    })
+
+    legacy = canonical.rename(
+        columns={
+            "timestamp_ms": "timestamp",
+            "accuracy_m": "accuracy",
+        }
+    )
+
+    expected = build_gps_intervals(
+        canonical,
+        window_start_ms=0,
+        window_end_ms=10 * MINUTE,
+        max_gap_ms=2 * MINUTE,
+    )
+
+    with pytest.warns(DeprecationWarning, match="timestamp_ms"):
+        result = build_gps_intervals(
+            legacy,
+            window_start_ms=0,
+            window_end_ms=10 * MINUTE,
+            max_gap_ms=2 * MINUTE,
+        )
+
+    pd.testing.assert_frame_equal(result, expected)
+    assert expected["start_accuracy"].tolist() == [5.0, 5.0]
+
+
+def test_missing_timestamp_raises():
+
+    gps = pd.DataFrame({
+        "latitude": [42.0],
+        "longitude": [-71.0],
+    })
+
+    with pytest.raises(ValueError, match="timestamp_ms"):
         build_gps_intervals(
             gps,
             window_start_ms=0,

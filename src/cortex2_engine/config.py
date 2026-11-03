@@ -1,7 +1,10 @@
 from pathlib import Path
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from cortex2_engine.time import parse_clock
 
 
 class StreamConfig(BaseModel):
@@ -20,9 +23,27 @@ class WindowsConfig(BaseModel):
 class StudyConfig(BaseModel):
     name: str
     timezone: str = "UTC"
+    # Local clock time at which a feature day begins (configs/default.yaml
+    # time.day_start). Days are [day_start, next day_start) in `timezone`.
+    day_start: str = "00:00"
     output_dir: Path
     windows: WindowsConfig
     streams: dict[str, StreamConfig] = Field(default_factory=dict)
+
+    @field_validator("timezone")
+    @classmethod
+    def _valid_timezone(cls, value: str) -> str:
+        try:
+            ZoneInfo(value)
+        except (ZoneInfoNotFoundError, ValueError) as exc:
+            raise ValueError(f"Unknown IANA timezone: {value!r}") from exc
+        return value
+
+    @field_validator("day_start")
+    @classmethod
+    def _valid_day_start(cls, value: str) -> str:
+        parse_clock(value)
+        return value
 
 
 def load_study_config(path: str | Path) -> StudyConfig:

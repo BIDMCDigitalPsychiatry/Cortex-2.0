@@ -64,3 +64,42 @@ reported 68 findings.
 
 ### Registry
 - No change: this phase adds streams, not features.
+
+## Phase 2 — Shared time utilities and status unification
+
+### Added
+- `cortex2_engine.time`: `local_day_bounds_ms(date, tz, day_start)`,
+  `iter_local_days(start_ms, end_ms, tz, *, day_start)` (yields `LocalDay` records with
+  clipped and full-day bounds), `local_dates`, `to_local_clock_hours`, `circular_sd_hours`,
+  `circular_mean_hours`, `parse_clock`, `coerce_timestamp_ms`. All built on `zoneinfo`.
+  Local days are 23 h / 24 h / 25 h; DST is tested on 2026-03-08 and 2026-11-01 in
+  America/New_York.
+  - Circular SD = `sqrt(-2 ln R) · 24 / 2π` hours (Mardia & Jupp 2000), where `R` is the
+    mean resultant length of clock angles. `R < 1e-12` → `inf` (no mean direction).
+- `StudyConfig.day_start` (default `"00:00"`, mirrors `configs/default.yaml::time.day_start`),
+  with validation of `day_start` and of `timezone` as an IANA zone.
+- `FeatureStatus`: new members `insufficient_observability`, `source_absent`, `censored`.
+  `feature_empty` is deprecated and never emitted. Helpers `status_from_counts(n_observed_ms,
+  minimum_observed_ms, value, *, n_records=None)` and `gated_value(value, status)`.
+- `docs/status_vocabulary.md`; `tests/test_status_vocabulary.py` (AST scan of `features/`).
+
+### Changed
+- **GPS status values:** `observed_value` → `observed` in `gps_location_features` and
+  `gps_observability` (now `FeatureStatus.<MEMBER>.value`). Outputs written earlier must be
+  mapped on read.
+- **GPS chain column names:** `build_gps_intervals` and
+  `gps_degradation.apply_missing_bin_mask_to_points` take canonical `timestamp_ms`
+  (and `accuracy_m`). The legacy `timestamp` still works with a `DeprecationWarning`, and
+  legacy `accuracy` is accepted silently, so existing `workflows/` keep running unchanged.
+- **`compute_daily_mobility_features`:** gains `minimum_supported_duration_ms=0.0` and
+  `_status` keys for `supported_displacement_distance_m`, `supported_radius_of_gyration_m`
+  and `implausible_transition_fraction`. With no spatially supported time the distance is
+  now **NaN / `insufficient_observability`** (was `0.0`). With no displacement candidates the
+  implausible-transition fraction is **NaN / `not_applicable`** (was `0.0`). Evidence counts
+  (`displacement_edge_count`, `implausible_transition_count`) are always reported.
+- `gps_location_episodes` and `gps_anchor_episodes` emit no feature statuses (only
+  edge-level `spatial_status`), so they needed no change.
+
+### Registry
+- No new features. Status semantics for existing entries are now those of
+  `docs/status_vocabulary.md`.
