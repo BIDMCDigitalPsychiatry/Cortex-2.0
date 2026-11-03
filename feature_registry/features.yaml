@@ -914,3 +914,173 @@ features:
     minimum_observability: ">= 3 prior valid observations"
     reliability_threshold: null
     reference: Cortex 2.0 (this work)
+
+  # --- Phase 9: features emitted by the daily driver not registered earlier ---
+
+  supported_displacement_distance_m:
+    display_name: Supported displacement distance
+    category: mobility
+    source_stream: gps
+    engine: cortex2
+    native: true
+    module: gps_mobility_features
+    unit: meters
+    personalized: true
+    reliability_metric: spatially_supported_duration_ms
+    minimum_observability: "> 0 supported GPS time (configurable)"
+    reliability_threshold: null
+    reference: GPS design doc (this repository)
+
+  supported_radius_of_gyration_m:
+    display_name: Radius of gyration (supported edges)
+    category: mobility
+    source_stream: gps
+    engine: cortex2
+    native: true
+    module: gps_mobility_features
+    unit: meters
+    personalized: true
+    reliability_metric: spatially_supported_duration_ms
+    minimum_observability: "> 0 supported GPS time (configurable)"
+    reliability_threshold: null
+    reference: Gonzalez 2008
+
+  implausible_transition_fraction:
+    display_name: Implausible GPS transition fraction
+    category: quality
+    source_stream: gps
+    engine: cortex2
+    native: true
+    module: gps_mobility_features
+    unit: fraction
+    personalized: true
+    reliability_metric: spatially_supported_duration_ms
+    minimum_observability: ">= 1 candidate transition"
+    reliability_threshold: null
+    reference: GPS design doc (this repository)
+
+  location_entropy_nats:
+    display_name: Location entropy (time-weighted)
+    category: mobility
+    source_stream: gps
+    engine: cortex2
+    native: true
+    module: gps_location_features
+    unit: nats
+    personalized: true
+    reliability_metric: assigned_place_time_ms
+    minimum_observability: ">= 1 assigned place"
+    reliability_threshold: null
+    reference: Saeb 2015
+
+  dominant_place_fraction:
+    display_name: Dominant-place time fraction
+    category: mobility
+    source_stream: gps
+    engine: cortex2
+    native: true
+    module: gps_location_features
+    unit: fraction
+    personalized: true
+    reliability_metric: assigned_place_time_ms
+    minimum_observability: ">= 1 assigned place"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  call_count_incoming:
+    display_name: Incoming calls
+    category: communication
+    source_stream: telephony
+    engine: cortex2
+    native: true
+    module: communication
+    unit: count_per_day
+    personalized: true
+    reliability_metric: telephony_n_records
+    minimum_observability: "logger evidence: stream active + 12 h observed"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  call_count_outgoing:
+    display_name: Outgoing calls
+    category: communication
+    source_stream: telephony
+    engine: cortex2
+    native: true
+    module: communication
+    unit: count_per_day
+    personalized: true
+    reliability_metric: telephony_n_records
+    minimum_observability: "logger evidence: stream active + 12 h observed"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  call_count_missed:
+    display_name: Missed calls
+    category: communication
+    source_stream: telephony
+    engine: cortex2
+    native: true
+    module: communication
+    unit: count_per_day
+    personalized: true
+    reliability_metric: telephony_n_records
+    minimum_observability: "logger evidence: stream active + 12 h observed"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  call_duration_ms_incoming:
+    display_name: Incoming call duration
+    category: communication
+    source_stream: telephony
+    engine: cortex2
+    native: true
+    module: communication
+    unit: milliseconds
+    personalized: true
+    reliability_metric: telephony_n_records
+    minimum_observability: "logger evidence: stream active + 12 h observed"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  call_duration_ms_outgoing:
+    display_name: Outgoing call duration
+    category: communication
+    source_stream: telephony
+    engine: cortex2
+    native: true
+    module: communication
+    unit: milliseconds
+    personalized: true
+    reliability_metric: telephony_n_records
+    minimum_observability: "logger evidence: stream active + 12 h observed"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  sms_count_incoming:
+    display_name: Incoming text messages
+    category: communication
+    source_stream: telephony
+    engine: cortex2
+    native: true
+    module: communication
+    unit: count_per_day
+    personalized: true
+    reliability_metric: telephony_n_records
+    minimum_observability: "logger evidence: stream active + 12 h observed"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  sms_count_outgoing:
+    display_name: Outgoing text messages
+    category: communication
+    source_stream: telephony
+    engine: cortex2
+    native: true
+    module: communication
+    unit: count_per_day
+    personalized: true
+    reliability_metric: telephony_n_records
+    minimum_observability: "logger evidence: stream active + 12 h observed"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)

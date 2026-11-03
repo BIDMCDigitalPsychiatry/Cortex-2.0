@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import yaml
@@ -20,6 +21,21 @@ class WindowsConfig(BaseModel):
     end_column: str = "clinical_end"
 
 
+class AdapterConfig(BaseModel):
+    """How ``cortex2 features`` reads raw data.
+
+    ``kind="mindlamp"`` uses ``passive_root`` (``<root>/<prefix>/<prefix>_<uid>_*.csv``)
+    and optional ``participant_map`` / ``source_manifest_dir``.
+    ``kind="generic_csv"`` uses ``config_path`` (a generic CSV adapter YAML).
+    """
+
+    kind: Literal["mindlamp", "generic_csv"] = "mindlamp"
+    passive_root: Path | None = None
+    participant_map: Path | None = None
+    source_manifest_dir: Path | None = None
+    config_path: Path | None = None
+
+
 class StudyConfig(BaseModel):
     name: str
     timezone: str = "UTC"
@@ -29,6 +45,8 @@ class StudyConfig(BaseModel):
     output_dir: Path
     windows: WindowsConfig
     streams: dict[str, StreamConfig] = Field(default_factory=dict)
+    # Optional; needed only by `cortex2 features`.
+    adapter: AdapterConfig | None = None
 
     @field_validator("timezone")
     @classmethod
@@ -66,6 +84,17 @@ def load_study_config(path: str | Path) -> StudyConfig:
         config.output_dir = (
             base / config.output_dir
         ).resolve()
+
+    if config.adapter is not None:
+        for field in (
+            "passive_root",
+            "participant_map",
+            "source_manifest_dir",
+            "config_path",
+        ):
+            value = getattr(config.adapter, field)
+            if value is not None and not value.is_absolute():
+                setattr(config.adapter, field, (base / value).resolve())
 
     for stream in config.streams.values():
         if not stream.path.is_absolute():

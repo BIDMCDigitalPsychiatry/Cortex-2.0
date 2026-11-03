@@ -1,3 +1,4 @@
+import datetime as dt
 import json
 from pathlib import Path
 from typing import Annotated
@@ -62,6 +63,49 @@ def inventory(
             indent=2,
         )
     )
+
+
+@app.command()
+def features(
+    config: Annotated[
+        Path,
+        typer.Option("--config", "-c", exists=True, readable=True),
+    ],
+    start: Annotated[
+        str | None,
+        typer.Option("--start", help="First local date (YYYY-MM-DD), inclusive."),
+    ] = None,
+    end: Annotated[
+        str | None,
+        typer.Option("--end", help="Last local date (YYYY-MM-DD), inclusive."),
+    ] = None,
+):
+    """Compute daily features and write the long parquet table."""
+
+    from cortex2_engine.adapters.factory import build_adapter, build_study_episodes
+    from cortex2_engine.config import load_study_config
+    from cortex2_engine.features.daily_driver import write_daily_features
+
+    try:
+        start_date = dt.date.fromisoformat(start) if start else None
+        end_date = dt.date.fromisoformat(end) if end else None
+    except ValueError as exc:
+        raise typer.BadParameter(f"dates must be YYYY-MM-DD: {exc}") from exc
+
+    if start_date and end_date and end_date < start_date:
+        raise typer.BadParameter("--end must not precede --start")
+
+    study = load_study_config(config)
+
+    path = write_daily_features(
+        build_adapter(study),
+        build_study_episodes(study),
+        study,
+        start_date=start_date,
+        end_date=end_date,
+    )
+
+    typer.echo(str(path))
 
 
 if __name__ == "__main__":

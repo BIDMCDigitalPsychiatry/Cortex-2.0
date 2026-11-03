@@ -301,3 +301,24 @@ Specification: `docs/features/baselines_clinical.md`.
 
 ### References
 Leys et al. 2013 (MAD scaling).
+
+## Phase 9 — Driver, registry, CLI and docs
+
+Specification: `docs/features/daily_driver.md`.
+
+### Added
+- `features/daily_driver.py`: `iter_daily_features(adapter, episodes, config)`,
+  `write_daily_features`, `compute_episode_daily_features` and `DriverParameters` (hashed
+  into `parameter_set_hash`). Output is the long table `study, participant_id,
+  episode_id, date_local, feature, value, unit, feature_status, observability,
+  observed_duration_ms, n_observations, completeness_weight, algorithm,
+  algorithm_version, parameter_set_hash`, covering 50 daily features in 6 families.
+- `cortex2 features --config <study.yaml> --start <date> --end <date>`.
+- `config.AdapterConfig` (optional `adapter` section of `StudyConfig`) and
+  `adapters/factory.py` (`build_adapter`, `build_study_episodes`).
+- Registry: 12 entries for driver features registered nowhere else (mobility 3, location 2,
+  communication by direction 7), giving 79 entries.
+- Tests: `test_daily_driver.py`, an end-to-end CLI run on a synthetic mindLAMP tree. It
+  checks schema, valid statuses, no bare zeros on an unobserved day, unit agreement between
+  driver and registry, and registry integrity (required fields, a minimum entry count).
+- README: new capabilities and CLI commands.

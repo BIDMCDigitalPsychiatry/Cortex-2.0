@@ -67,6 +67,14 @@ The current implementation includes:
 - GPS and accelerometer temporal data quality
 - screen observation summaries
 - temporal missingness metrics
+- telephony, survey, cognitive, steps and sleep streams
+- local-time (DST-aware) day utilities and a shared feature-status vocabulary
+- accelerometer, screen, phone-sleep, wearable-sleep, GPS, communication,
+  social-rhythm, cognitive-variability and survey-scoring features
+  (`docs/features/`)
+- participant-day completeness weights and a daily missingness phenotype
+- personal baselines and clinical alignment
+- a daily feature driver (`cortex2 features`) writing one long parquet table
 - automated validation tests
 
 The current test suite has 156 passing tests.
@@ -98,7 +106,13 @@ pytest -q
 ```bash
 cortex2 version
 cortex2 info
+cortex2 inventory --config study.yaml
+cortex2 features  --config study.yaml --start 2026-05-04 --end 2026-05-31
 ```
+
+`cortex2 features` needs an `adapter` section in the study config (see
+`docs/features/daily_driver.md`) and writes
+`<output_dir>/features/daily_features_long.parquet`.
 
 ## Repository structure
 
