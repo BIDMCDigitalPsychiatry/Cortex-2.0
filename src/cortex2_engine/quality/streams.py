@@ -26,7 +26,7 @@ def _observation_summary(
 
     return {
         "n_observations":
-            int(len(z)),
+            len(z),
 
         "first_observed_ms":
             int(
@@ -154,7 +154,7 @@ def screen_quality(
         "observed": 1,
 
         "n_events":
-            int(len(z)),
+            len(z),
 
         "first_observed_ms":
             int(

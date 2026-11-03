@@ -26,11 +26,9 @@ import pandas as pd
 from cortex2_engine.features.gps_intervals import (
     haversine_km,
 )
-
 from cortex2_engine.features.gps_spatial_semantics import (
     SPATIAL_STATUS_ACCURACY_OVERLAP,
 )
-
 
 OUTPUT_COLUMNS = [
     "episode_start_ms",

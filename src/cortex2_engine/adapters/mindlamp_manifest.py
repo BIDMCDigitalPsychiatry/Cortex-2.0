@@ -2,7 +2,6 @@ from pathlib import Path
 
 import pandas as pd
 
-
 STREAMS = {
     "gps": {
         "folder": "gps",
@@ -206,7 +205,8 @@ def file_manifest_record(
             bounds
         )
 
-    except Exception as e:
+    # A manifest records unreadable files instead of aborting the scan.
+    except Exception as e:  # noqa: BLE001
 
         record.update({
             "n_rows":

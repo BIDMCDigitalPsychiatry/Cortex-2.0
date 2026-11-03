@@ -18,6 +18,7 @@ import math
 import numpy as np
 import pandas as pd
 
+from cortex2_engine.time import coerce_timestamp_ms
 
 EARTH_RADIUS_KM = 6371.0088
 
@@ -96,7 +97,9 @@ def build_gps_intervals(
     Parameters
     ----------
     gps
-        DataFrame containing at least timestamp, latitude, longitude.
+        DataFrame containing ``timestamp_ms`` (epoch ms), ``latitude`` and
+        ``longitude``, plus optional ``accuracy_m``. The legacy column names
+        ``timestamp`` (deprecated, warns) and ``accuracy`` are accepted.
     window_start_ms
         Inclusive beginning of analysis window.
     window_end_ms
@@ -122,8 +125,13 @@ def build_gps_intervals(
         - start/end positional accuracy when available
     """
 
+    gps = coerce_timestamp_ms(
+        gps,
+        caller="build_gps_intervals",
+    )
+
     required = {
-        "timestamp",
+        "timestamp_ms",
         "latitude",
         "longitude",
     }
@@ -194,7 +202,7 @@ def build_gps_intervals(
     x = gps.copy()
 
     for col in [
-        "timestamp",
+        "timestamp_ms",
         "latitude",
         "longitude",
     ]:
@@ -204,9 +212,15 @@ def build_gps_intervals(
             errors="coerce",
         )
 
-    if "accuracy" in x.columns:
+    accuracy_column = (
+        "accuracy_m"
+        if "accuracy_m" in x.columns
+        else "accuracy"
+    )
+
+    if accuracy_column in x.columns:
         x["accuracy"] = pd.to_numeric(
-            x["accuracy"],
+            x[accuracy_column],
             errors="coerce",
         )
 
@@ -216,7 +230,7 @@ def build_gps_intervals(
     x = (
         x.dropna(
             subset=[
-                "timestamp",
+                "timestamp_ms",
                 "latitude",
                 "longitude",
             ]
@@ -226,11 +240,11 @@ def build_gps_intervals(
 
     x = x[
         (
-            x["timestamp"]
+            x["timestamp_ms"]
             >= window_start_ms
         )
         & (
-            x["timestamp"]
+            x["timestamp_ms"]
             < window_end_ms
         )
     ].copy()
@@ -240,8 +254,8 @@ def build_gps_intervals(
             columns=columns
         )
 
-    x["timestamp"] = (
-        x["timestamp"]
+    x["timestamp_ms"] = (
+        x["timestamp_ms"]
         .astype("int64")
     )
 
@@ -249,12 +263,12 @@ def build_gps_intervals(
     # Keep one deterministic observation per timestamp.
     x = (
         x.sort_values(
-            "timestamp",
+            "timestamp_ms",
             kind="mergesort",
         )
         .drop_duplicates(
             subset=[
-                "timestamp",
+                "timestamp_ms",
             ],
             keep="first",
         )
@@ -280,11 +294,11 @@ def build_gps_intervals(
     ):
 
         start_ms = int(
-            left.timestamp
+            left.timestamp_ms
         )
 
         end_ms = int(
-            right.timestamp
+            right.timestamp_ms
         )
 
         gap_ms = (

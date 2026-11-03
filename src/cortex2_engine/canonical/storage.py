@@ -215,7 +215,7 @@ class MaterializedCanonicalStore:
                             str(path),
 
                         "rows":
-                            int(len(part)),
+                            len(part),
 
                         "size_bytes":
                             int(
@@ -276,7 +276,7 @@ class MaterializedCanonicalStore:
                 streams,
 
             "files":
-                int(len(manifest)),
+                len(manifest),
 
             "rows":
                 (

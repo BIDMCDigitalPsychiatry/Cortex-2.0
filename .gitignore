@@ -54,3 +54,4 @@ gps_intermediate_*.out
 gps_intermediate_*.err
 gps_reliability_holdout_*.out
 gps_reliability_holdout_*.err
+.coverage

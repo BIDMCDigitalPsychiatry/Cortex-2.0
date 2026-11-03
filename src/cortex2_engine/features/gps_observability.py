@@ -24,9 +24,13 @@ Windows are [window_start_ms, window_end_ms), i.e. end-exclusive.
 
 from __future__ import annotations
 
-from statistics import median
+import itertools
 import math
-from typing import Iterable, Any
+from collections.abc import Iterable
+from statistics import median
+from typing import Any
+
+from cortex2_engine.features.status import FeatureStatus
 
 
 def _coerce_timestamp(value: Any) -> int | None:
@@ -228,7 +232,7 @@ def compute_gps_temporal_observability(
     if not timestamps:
         return {
             "status":
-                "no_raw_data",
+                FeatureStatus.NO_RAW_DATA.value,
             "window_start_ms":
                 window_start_ms,
             "window_end_ms":
@@ -294,10 +298,7 @@ def compute_gps_temporal_observability(
     if len(timestamps) >= 2:
         deltas = [
             right - left
-            for left, right in zip(
-                timestamps[:-1],
-                timestamps[1:],
-            )
+            for left, right in itertools.pairwise(timestamps)
         ]
 
         median_sampling_interval_ms = median(
@@ -313,10 +314,7 @@ def compute_gps_temporal_observability(
         tuple[int, int]
     ] = []
 
-    for left, right in zip(
-        timestamps[:-1],
-        timestamps[1:],
-    ):
+    for left, right in itertools.pairwise(timestamps):
         gap = (
             right
             - left
@@ -359,11 +357,11 @@ def compute_gps_temporal_observability(
 
     if not observed_segments:
         status = (
-            "insufficient_observability"
+            FeatureStatus.INSUFFICIENT_OBSERVABILITY.value
         )
     else:
         status = (
-            "observed_value"
+            FeatureStatus.OBSERVED.value
         )
 
     return {

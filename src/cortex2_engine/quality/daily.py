@@ -11,7 +11,6 @@ from cortex2_engine.quality.streams import (
     screen_quality,
 )
 
-
 OUTSIDE_SOURCE_STATUSES = {
     SourceBoundaryStatus.OUTSIDE_DECLARED_END,
     SourceBoundaryStatus.OUTSIDE_DECLARED_START,

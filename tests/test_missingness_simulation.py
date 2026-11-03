@@ -4,11 +4,9 @@ import pytest
 from cortex2_engine.features.missingness_simulation import (
     make_balanced_k_run_missing_bin_mask,
 )
-
 from cortex2_engine.features.missingness_structure import (
     compute_missingness_structure,
 )
-
 
 MINUTE = 60_000
 DAY = 24 * 60 * MINUTE
@@ -74,14 +72,14 @@ def test_exact_number_of_runs(
 
 def test_deterministic():
 
-    kwargs = dict(
-        window_start_ms=0,
-        window_end_ms=DAY,
-        target_coverage=0.75,
-        n_runs=4,
-        bin_size_ms=5 * MINUTE,
-        seed=9876,
-    )
+    kwargs = {
+        "window_start_ms": 0,
+        "window_end_ms": DAY,
+        "target_coverage": 0.75,
+        "n_runs": 4,
+        "bin_size_ms": 5 * MINUTE,
+        "seed": 9876,
+    }
 
 
     a, _ = (

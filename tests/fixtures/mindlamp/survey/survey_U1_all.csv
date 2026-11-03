@@ -1,0 +1,4 @@
+timestamp,activity_name,question,value,duration,activity_id
+1772884800000,PHQ-9,Little interest or pleasure in doing things,2,3400,act_phq9
+1772884803400,PHQ-9,"Feeling down, depressed, or hopeless",1,2100,act_phq9
+1772884805500,PHQ-9,Free text comment,felt ok,9000,act_phq9

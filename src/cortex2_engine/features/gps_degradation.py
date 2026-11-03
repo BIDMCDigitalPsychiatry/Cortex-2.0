@@ -21,6 +21,8 @@ import math
 import numpy as np
 import pandas as pd
 
+from cortex2_engine.time import coerce_timestamp_ms
+
 
 def make_missing_bin_mask(
     *,
@@ -69,14 +71,13 @@ def make_missing_bin_mask(
         - window_start_ms
     )
 
-    n_bins = int(
-        math.ceil(
-            duration_ms
-            / bin_size_ms
-        )
+    n_bins = math.ceil(
+        duration_ms
+        / bin_size_ms
     )
 
-    n_missing = int(
+    # int() is required: round() on a numpy<2 float64 returns a float.
+    n_missing = int(  # noqa: RUF046
         round(
             (1.0 - target_coverage)
             * n_bins
@@ -164,12 +165,22 @@ def apply_missing_bin_mask_to_points(
     bin_size_ms: int,
     missing_mask: np.ndarray,
 ) -> pd.DataFrame:
-    """Remove raw GPS observations occurring inside masked time bins."""
+    """Remove raw GPS observations occurring inside masked time bins.
 
-    if "timestamp" not in points.columns:
-        raise ValueError(
-            "points must contain timestamp"
-        )
+    ``points`` must carry ``timestamp_ms`` (or the deprecated ``timestamp``).
+    The returned frame keeps the input's columns unchanged.
+    """
+
+    timestamp_column = (
+        "timestamp_ms"
+        if "timestamp_ms" in points.columns
+        else "timestamp"
+    )
+
+    coerce_timestamp_ms(
+        points.head(0),
+        caller="apply_missing_bin_mask_to_points",
+    )
 
     if len(missing_mask) == 0:
         raise ValueError(
@@ -181,7 +192,7 @@ def apply_missing_bin_mask_to_points(
 
     timestamps = pd.to_numeric(
         points[
-            "timestamp"
+            timestamp_column
         ],
         errors="coerce",
     ).to_numpy(

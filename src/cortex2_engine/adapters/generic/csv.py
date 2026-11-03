@@ -1,10 +1,11 @@
-from pathlib import Path
 import re
+from pathlib import Path
 
 import pandas as pd
 import yaml
 
 from cortex2_engine.adapters.base import BaseAdapter
+from cortex2_engine.canonical.timestamps import datetime_to_epoch_ms
 from cortex2_engine.canonical.validation import (
     validate_canonical,
 )
@@ -167,10 +168,9 @@ class GenericCSVAdapter(BaseAdapter):
             "UTC"
         )
 
-        return (
-            dt.astype("int64")
-            // 1_000_000
-        ).astype("Int64")
+        return datetime_to_epoch_ms(
+            dt
+        )
 
     def _canonicalize_chunk(
         self,

@@ -1,0 +1,7 @@
+timestamp,sensor,call_type,call_duration,call_trace,sms_type,sms_trace
+1772884800000,lamp.calls,1,60,+1 (617) 555-0100,,
+1772885400000,lamp.calls,2,120,16175550100,,
+1772886000000,lamp.calls,3,0,617-555-0199,,
+1772886600000,lamp.sms,,,,1,+1 617 555 0100
+1772887200000,lamp.sms,,,,2,opaque-trace-7
+1772887800000,lamp.calls,9,30,,,

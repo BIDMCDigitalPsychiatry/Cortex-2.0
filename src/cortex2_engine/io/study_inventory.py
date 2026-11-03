@@ -70,13 +70,13 @@ def run_inventory(config_path):
             config.timezone,
 
         "participants":
-            int(len(participants)),
+            len(participants),
 
         "participant_days":
-            int(len(daily)),
+            len(daily),
 
         "raw_files":
-            int(len(files)),
+            len(files),
 
         "streams":
             sorted(

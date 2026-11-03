@@ -1,3 +1,8 @@
+# reliability_threshold: minimum daily coverage at which the feature's error from
+# missing data stays below within-person day-to-day variation. Written only by
+# features/degradation_sweep.write_reliability_thresholds for a named reference set
+# (recorded as reliability_reference_set). None is supplied yet, so all are null.
+# See docs/features/degradation.md.
 features:
 
   gps_data_quality:
@@ -103,3 +108,984 @@ features:
     personalized: true
     reliability_metric: gps_data_quality
     reliability_threshold: null
+
+  # --- Phase 3: accelerometer (docs/features/accelerometer.md) ---
+
+  mean_enmo_mg:
+    display_name: Mean ENMO (worn time)
+    category: activity
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_daily
+    unit: mg
+    personalized: true
+    reliability_metric: acc_valid_minutes
+    minimum_observability: "600 valid minutes"
+    reliability_threshold: null
+    reference: van Hees 2013
+
+  acc_nonwear_fraction:
+    display_name: Phone not-carried fraction
+    category: observability
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_nonwear
+    unit: fraction
+    personalized: true
+    reliability_metric: acc_evaluable_ms
+    minimum_observability: "3600000 ms judged"
+    reliability_threshold: null
+    reference: van Hees 2011
+
+  active_minutes:
+    display_name: Active minutes
+    category: activity
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_fragmentation
+    unit: minutes_per_day
+    personalized: true
+    reliability_metric: acc_valid_minutes
+    minimum_observability: "600 valid minutes"
+    reliability_threshold: null
+    reference: Di 2017
+
+  sedentary_minutes:
+    display_name: Sedentary minutes
+    category: activity
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_fragmentation
+    unit: minutes_per_day
+    personalized: true
+    reliability_metric: acc_valid_minutes
+    minimum_observability: "600 valid minutes"
+    reliability_threshold: null
+    reference: Di 2017
+
+  astp_per_min:
+    display_name: Active-to-sedentary transition probability
+    category: activity
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_fragmentation
+    unit: per_minute
+    personalized: true
+    reliability_metric: acc_valid_minutes
+    minimum_observability: "600 valid minutes"
+    reliability_threshold: null
+    reference: Di 2017
+
+  satp_per_min:
+    display_name: Sedentary-to-active transition probability
+    category: activity
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_fragmentation
+    unit: per_minute
+    personalized: true
+    reliability_metric: acc_valid_minutes
+    minimum_observability: "600 valid minutes"
+    reliability_threshold: null
+    reference: Di 2017
+
+  mean_active_bout_min:
+    display_name: Mean active bout length
+    category: activity
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_fragmentation
+    unit: minutes
+    personalized: true
+    reliability_metric: acc_valid_minutes
+    minimum_observability: "600 valid minutes"
+    reliability_threshold: null
+    reference: Di 2017
+
+  active_bout_gini:
+    display_name: Active bout Gini
+    category: activity
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_fragmentation
+    unit: index
+    personalized: true
+    reliability_metric: acc_valid_minutes
+    minimum_observability: "600 valid minutes; >= 2 bouts"
+    reliability_threshold: null
+    reference: Di 2017
+
+  interdaily_stability:
+    display_name: Interdaily stability
+    category: circadian
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_circadian
+    unit: index
+    personalized: true
+    reliability_metric: n_days_valid
+    minimum_observability: "5 valid days of >= 18 observed hours; <= 20% cells excluded"
+    reliability_threshold: null
+    reference: Van Someren 1999
+
+  intradaily_variability:
+    display_name: Intradaily variability
+    category: circadian
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_circadian
+    unit: index
+    personalized: true
+    reliability_metric: n_days_valid
+    minimum_observability: "5 valid days of >= 18 observed hours; <= 20% cells excluded"
+    reliability_threshold: null
+    reference: Van Someren 1999
+
+  relative_amplitude:
+    display_name: Relative amplitude
+    category: circadian
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_circadian
+    unit: index
+    personalized: true
+    reliability_metric: n_days_valid
+    minimum_observability: "5 valid days of >= 18 observed hours; <= 20% cells excluded"
+    reliability_threshold: null
+    reference: Van Someren 1999
+
+  m10_mg:
+    display_name: Most active 10 h (M10)
+    category: circadian
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_circadian
+    unit: mg
+    personalized: true
+    reliability_metric: n_days_valid
+    minimum_observability: "5 valid days"
+    reliability_threshold: null
+    reference: Van Someren 1999
+
+  l5_mg:
+    display_name: Least active 5 h (L5)
+    category: circadian
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_circadian
+    unit: mg
+    personalized: true
+    reliability_metric: n_days_valid
+    minimum_observability: "5 valid days"
+    reliability_threshold: null
+    reference: Van Someren 1999
+
+  m10_onset_local_h:
+    display_name: M10 onset
+    category: circadian
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_circadian
+    unit: local_clock_hour
+    personalized: true
+    reliability_metric: n_days_valid
+    minimum_observability: "5 valid days"
+    reliability_threshold: null
+    reference: Van Someren 1999
+
+  l5_onset_local_h:
+    display_name: L5 onset
+    category: circadian
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_circadian
+    unit: local_clock_hour
+    personalized: true
+    reliability_metric: n_days_valid
+    minimum_observability: "5 valid days"
+    reliability_threshold: null
+    reference: Van Someren 1999
+
+  # --- Phase 4: screen and sleep (docs/features/screen.md, sleep.md) ---
+
+  screen_on_ms:
+    display_name: Screen-on time
+    category: behavior
+    source_stream: screen
+    engine: cortex2
+    native: true
+    module: screen_bouts
+    unit: milliseconds_per_day
+    personalized: true
+    reliability_metric: screen_supported_duration_ms
+    minimum_observability: "43200000 ms supported"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  n_bouts:
+    display_name: Screen bouts
+    category: behavior
+    source_stream: screen
+    engine: cortex2
+    native: true
+    module: screen_bouts
+    unit: count_per_day
+    personalized: true
+    reliability_metric: screen_supported_duration_ms
+    minimum_observability: "43200000 ms supported"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  median_bout_ms:
+    display_name: Median screen bout
+    category: behavior
+    source_stream: screen
+    engine: cortex2
+    native: true
+    module: screen_bouts
+    unit: milliseconds
+    personalized: true
+    reliability_metric: screen_supported_duration_ms
+    minimum_observability: "43200000 ms supported; >= 1 uncensored bout"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  micro_bout_rate_per_hour:
+    display_name: Screen micro-bout rate
+    category: behavior
+    source_stream: screen
+    engine: cortex2
+    native: true
+    module: screen_bouts
+    unit: per_supported_hour
+    personalized: true
+    reliability_metric: screen_supported_duration_ms
+    minimum_observability: "43200000 ms supported"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  screen_fragmentation_index:
+    display_name: Screen fragmentation index
+    category: behavior
+    source_stream: screen
+    engine: cortex2
+    native: true
+    module: screen_bouts
+    unit: bouts_per_screen_on_hour
+    personalized: true
+    reliability_metric: screen_supported_duration_ms
+    minimum_observability: "43200000 ms supported; screen_on_ms > 0"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  nocturnal_screen_on_ms:
+    display_name: Nocturnal screen-on time
+    category: sleep
+    source_stream: screen
+    engine: cortex2
+    native: true
+    module: screen_bouts
+    unit: milliseconds_per_day
+    personalized: true
+    reliability_metric: screen_supported_duration_ms
+    minimum_observability: "43200000 ms supported"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  nocturnal_n_bouts:
+    display_name: Nocturnal screen bouts
+    category: sleep
+    source_stream: screen
+    engine: cortex2
+    native: true
+    module: screen_bouts
+    unit: count_per_day
+    personalized: true
+    reliability_metric: screen_supported_duration_ms
+    minimum_observability: "43200000 ms supported"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  sleep_duration_ms:
+    display_name: Phone-rest (sleep) window duration
+    category: sleep
+    source_stream: screen+accelerometer
+    engine: cortex2
+    native: true
+    module: sleep_window
+    unit: milliseconds
+    personalized: true
+    reliability_metric: night_coverage_fraction
+    minimum_observability: "0.7 night coverage"
+    reliability_threshold: null
+    reference: Borger 2019
+
+  sleep_onset_local_h:
+    display_name: Sleep onset (phone)
+    category: sleep
+    source_stream: screen+accelerometer
+    engine: cortex2
+    native: true
+    module: sleep_window
+    unit: local_clock_hour
+    personalized: true
+    reliability_metric: night_coverage_fraction
+    minimum_observability: "0.7 night coverage"
+    reliability_threshold: null
+    reference: Borger 2019
+
+  sleep_offset_local_h:
+    display_name: Sleep offset (phone)
+    category: sleep
+    source_stream: screen+accelerometer
+    engine: cortex2
+    native: true
+    module: sleep_window
+    unit: local_clock_hour
+    personalized: true
+    reliability_metric: night_coverage_fraction
+    minimum_observability: "0.7 night coverage"
+    reliability_threshold: null
+    reference: Borger 2019
+
+  sleep_midpoint_local_h:
+    display_name: Sleep midpoint (phone)
+    category: sleep
+    source_stream: screen+accelerometer
+    engine: cortex2
+    native: true
+    module: sleep_window
+    unit: local_clock_hour
+    personalized: true
+    reliability_metric: night_coverage_fraction
+    minimum_observability: "0.7 night coverage"
+    reliability_threshold: null
+    reference: Borger 2019
+
+  n_awakenings:
+    display_name: Night awakenings (phone)
+    category: sleep
+    source_stream: screen+accelerometer
+    engine: cortex2
+    native: true
+    module: sleep_window
+    unit: count_per_night
+    personalized: true
+    reliability_metric: night_coverage_fraction
+    minimum_observability: "0.7 night coverage"
+    reliability_threshold: null
+    reference: Borger 2019
+
+  healthkit_sleep_duration_ms:
+    display_name: Wearable sleep duration
+    category: sleep
+    source_stream: sleep
+    engine: cortex2
+    native: true
+    module: wearable_sleep
+    unit: milliseconds
+    personalized: true
+    reliability_metric: healthkit_n_segments
+    minimum_observability: ">= 1 segment"
+    reliability_threshold: null
+    reference: Apple HealthKit HKCategoryValueSleepAnalysis
+
+  healthkit_in_bed_ms:
+    display_name: Wearable in-bed time
+    category: sleep
+    source_stream: sleep
+    engine: cortex2
+    native: true
+    module: wearable_sleep
+    unit: milliseconds
+    personalized: true
+    reliability_metric: healthkit_n_segments
+    minimum_observability: ">= 1 in_bed segment"
+    reliability_threshold: null
+    reference: Apple HealthKit HKCategoryValueSleepAnalysis
+
+  healthkit_awake_ms:
+    display_name: Wearable awake-in-bed time
+    category: sleep
+    source_stream: sleep
+    engine: cortex2
+    native: true
+    module: wearable_sleep
+    unit: milliseconds
+    personalized: true
+    reliability_metric: healthkit_n_segments
+    minimum_observability: ">= 1 in_awake segment"
+    reliability_threshold: null
+    reference: Apple HealthKit HKCategoryValueSleepAnalysis
+
+  # --- Phase 5: GPS upgrades (docs/features/gps.md) ---
+
+  home_time_ms:
+    display_name: Time at inferred home
+    category: mobility
+    source_stream: gps
+    engine: cortex2
+    native: true
+    module: gps_home
+    unit: milliseconds
+    personalized: true
+    reliability_metric: supported_duration_ms
+    minimum_observability: "6 h supported GPS + observed home record"
+    reliability_threshold: null
+    reference: Barnett & Onnela 2020; GPS design doc §4
+
+  home_time_fraction:
+    display_name: Share of supported time at home
+    category: mobility
+    source_stream: gps
+    engine: cortex2
+    native: true
+    module: gps_home
+    unit: fraction
+    personalized: true
+    reliability_metric: supported_duration_ms
+    minimum_observability: "6 h supported GPS + observed home record"
+    reliability_threshold: null
+    reference: Barnett & Onnela 2020; GPS design doc §4
+
+  convex_hull_area_km2:
+    display_name: Activity space (convex hull)
+    category: mobility
+    source_stream: gps
+    engine: cortex2
+    native: true
+    module: gps_activity_space
+    unit: square_kilometers
+    personalized: true
+    reliability_metric: supported_duration_ms
+    minimum_observability: "6 h supported GPS"
+    reliability_threshold: null
+    reference: Andrew 1979
+
+  sde_area_km2:
+    display_name: Activity space (standard deviational ellipse)
+    category: mobility
+    source_stream: gps
+    engine: cortex2
+    native: true
+    module: gps_activity_space
+    unit: square_kilometers
+    personalized: true
+    reliability_metric: supported_duration_ms
+    minimum_observability: "6 h supported GPS"
+    reliability_threshold: null
+    reference: Lefever 1926; Sherman 2005
+
+  anisotropy:
+    display_name: Activity-space anisotropy
+    category: mobility
+    source_stream: gps
+    engine: cortex2
+    native: true
+    module: gps_activity_space
+    unit: fraction
+    personalized: true
+    reliability_metric: supported_duration_ms
+    minimum_observability: "6 h supported GPS"
+    reliability_threshold: null
+    reference: Sherman 2005
+
+  major_axis_bearing_deg:
+    display_name: Activity-space major-axis bearing
+    category: mobility
+    source_stream: gps
+    engine: cortex2
+    native: true
+    module: gps_activity_space
+    unit: degrees
+    personalized: true
+    reliability_metric: supported_duration_ms
+    minimum_observability: "6 h supported GPS"
+    reliability_threshold: null
+    reference: Sherman 2005
+
+  location_novelty_fraction:
+    display_name: Location novelty
+    category: mobility
+    source_stream: gps
+    engine: cortex2
+    native: true
+    module: gps_routine
+    unit: fraction
+    personalized: true
+    reliability_metric: novelty_supported_ms
+    minimum_observability: "6 h assigned time + 7 history days"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work; definition in docs/features/gps.md)
+
+  routine_index:
+    display_name: Routine index
+    category: mobility
+    source_stream: gps
+    engine: cortex2
+    native: true
+    module: gps_routine
+    unit: fraction
+    personalized: true
+    reliability_metric: routine_n_days
+    minimum_observability: "3 comparison days with >= 12 shared hours"
+    reliability_threshold: null
+    reference: Canzian & Musolesi 2015
+
+  circadian_movement:
+    display_name: Circadian movement
+    category: mobility
+    source_stream: gps
+    engine: cortex2
+    native: true
+    module: gps_circadian_movement
+    unit: log_energy
+    personalized: true
+    reliability_metric: supported_duration_ms
+    minimum_observability: "12 h supported GPS spanning >= 24 h"
+    reliability_threshold: null
+    reference: Saeb 2015
+
+  # --- Phase 6: communication, rhythm, cognition, surveys (docs/features/communication.md, cognition_surveys.md) ---
+
+  call_count:
+    display_name: Calls
+    category: communication
+    source_stream: telephony
+    engine: cortex2
+    native: true
+    module: communication
+    unit: count_per_day
+    personalized: true
+    reliability_metric: telephony_n_records
+    minimum_observability: "logger evidence: stream active + 12 h observed"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  call_duration_ms:
+    display_name: Call duration
+    category: communication
+    source_stream: telephony
+    engine: cortex2
+    native: true
+    module: communication
+    unit: milliseconds
+    personalized: true
+    reliability_metric: telephony_n_records
+    minimum_observability: "logger evidence: stream active + 12 h observed"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  sms_count:
+    display_name: Text messages
+    category: communication
+    source_stream: telephony
+    engine: cortex2
+    native: true
+    module: communication
+    unit: count_per_day
+    personalized: true
+    reliability_metric: telephony_n_records
+    minimum_observability: "logger evidence: stream active + 12 h observed"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  n_unique_contacts:
+    display_name: Unique contacts
+    category: communication
+    source_stream: telephony
+    engine: cortex2
+    native: true
+    module: communication
+    unit: count_per_day
+    personalized: true
+    reliability_metric: telephony_n_records
+    minimum_observability: "logger evidence: stream active + 12 h observed"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  communication_reciprocity:
+    display_name: Communication reciprocity
+    category: communication
+    source_stream: telephony
+    engine: cortex2
+    native: true
+    module: communication
+    unit: fraction
+    personalized: true
+    reliability_metric: n_unique_contacts
+    minimum_observability: ">= 1 hashed contact"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  communication_entropy_nats:
+    display_name: Communication entropy
+    category: communication
+    source_stream: telephony
+    engine: cortex2
+    native: true
+    module: communication
+    unit: nats
+    personalized: true
+    reliability_metric: n_unique_contacts
+    minimum_observability: ">= 1 hashed contact"
+    reliability_threshold: null
+    reference: Shannon 1948
+
+  outgoing_fraction:
+    display_name: Outgoing communication fraction
+    category: communication
+    source_stream: telephony
+    engine: cortex2
+    native: true
+    module: communication
+    unit: fraction
+    personalized: true
+    reliability_metric: telephony_n_records
+    minimum_observability: ">= 1 incoming or outgoing event"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  social_rhythm_regularity:
+    display_name: Social rhythm regularity
+    category: rhythm
+    source_stream: screen+gps+telephony+accelerometer
+    engine: cortex2
+    native: true
+    module: social_rhythm
+    unit: fraction
+    personalized: true
+    reliability_metric: social_rhythm_n_anchors
+    minimum_observability: ">= 2 anchors with >= 4 days in 7"
+    reliability_threshold: null
+    reference: Monk 1990
+
+  social_rhythm_mean_circular_sd_h:
+    display_name: Anchor-time circular SD
+    category: rhythm
+    source_stream: screen+gps+telephony+accelerometer
+    engine: cortex2
+    native: true
+    module: social_rhythm
+    unit: hours
+    personalized: true
+    reliability_metric: social_rhythm_n_anchors
+    minimum_observability: ">= 2 anchors with >= 4 days in 7"
+    reliability_threshold: null
+    reference: Monk 1990
+
+  rt_cov:
+    display_name: Reaction-time coefficient of variation
+    category: cognition
+    source_stream: cognitive
+    engine: cortex2
+    native: true
+    module: cognitive_variability
+    unit: fraction
+    personalized: true
+    reliability_metric: n_trials_kept
+    minimum_observability: ">= 8 kept trials per session"
+    reliability_threshold: null
+    reference: MacDonald 2006
+
+  rt_tau_ms:
+    display_name: Reaction-time ex-Gaussian tau
+    category: cognition
+    source_stream: cognitive
+    engine: cortex2
+    native: true
+    module: cognitive_variability
+    unit: milliseconds
+    personalized: true
+    reliability_metric: n_trials_kept
+    minimum_observability: ">= 8 kept trials, positive skew"
+    reliability_threshold: null
+    reference: Olivier & Norberg 2010
+
+  rt_slope_ms_per_trial:
+    display_name: Within-session reaction-time slope
+    category: cognition
+    source_stream: cognitive
+    engine: cortex2
+    native: true
+    module: cognitive_variability
+    unit: milliseconds_per_trial
+    personalized: true
+    reliability_metric: n_trials_kept
+    minimum_observability: ">= 8 kept trials per session"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  phq9_total:
+    display_name: PHQ-9 total
+    category: survey
+    source_stream: survey
+    engine: cortex2
+    native: true
+    module: survey_scoring
+    unit: points_0_27
+    personalized: true
+    reliability_metric: n_items_valid
+    minimum_observability: ">= 7 of 9 items"
+    reliability_threshold: null
+    reference: Kroenke 2001
+
+  gad7_total:
+    display_name: GAD-7 total
+    category: survey
+    source_stream: survey
+    engine: cortex2
+    native: true
+    module: survey_scoring
+    unit: points_0_21
+    personalized: true
+    reliability_metric: n_items_valid
+    minimum_observability: ">= 5 of 7 items"
+    reliability_threshold: null
+    reference: Spitzer 2006
+
+  # --- Phase 7: completeness and missingness (docs/features/missingness.md) ---
+
+  completeness_weight:
+    display_name: Participant-day completeness weight
+    category: quality
+    source_stream: all
+    engine: cortex2
+    native: true
+    module: quality.completeness
+    unit: weight_0_1
+    personalized: false
+    reliability_metric: completeness_weight
+    minimum_observability: "none (weight, not a feature)"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work; definition in docs/features/missingness.md)
+
+  missingness_phenotype:
+    display_name: Daily missingness phenotype
+    category: quality
+    source_stream: gps+accelerometer+screen
+    engine: cortex2
+    native: true
+    module: missingness.phenotype
+    unit: category
+    personalized: false
+    reliability_metric: n_eligible_hours
+    minimum_observability: ">= 12 eligible hours"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work; docs/gps_missingness_wifi_module.md onset regimes)
+
+  # --- Phase 8: baselines (docs/features/baselines_clinical.md) ---
+  # Derived per input feature; registered once as generic transforms.
+
+  robust_z:
+    display_name: Personal-baseline robust z (any feature)
+    category: derived
+    source_stream: any
+    engine: cortex2
+    native: true
+    module: baseline.personal
+    unit: robust_sd
+    personalized: true
+    reliability_metric: baseline_n_observations
+    minimum_observability: ">= 3 prior valid observations"
+    reliability_threshold: null
+    reference: Leys 2013
+
+  deviation:
+    display_name: Deviation from personal baseline (any feature)
+    category: derived
+    source_stream: any
+    engine: cortex2
+    native: true
+    module: baseline.personal
+    unit: feature_unit
+    personalized: true
+    reliability_metric: baseline_n_observations
+    minimum_observability: ">= 3 prior valid observations"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  # --- Phase 9: features emitted by the daily driver not registered earlier ---
+
+  supported_displacement_distance_m:
+    display_name: Supported displacement distance
+    category: mobility
+    source_stream: gps
+    engine: cortex2
+    native: true
+    module: gps_mobility_features
+    unit: meters
+    personalized: true
+    reliability_metric: spatially_supported_duration_ms
+    minimum_observability: "> 0 supported GPS time (configurable)"
+    reliability_threshold: null
+    reference: GPS design doc (this repository)
+
+  supported_radius_of_gyration_m:
+    display_name: Radius of gyration (supported edges)
+    category: mobility
+    source_stream: gps
+    engine: cortex2
+    native: true
+    module: gps_mobility_features
+    unit: meters
+    personalized: true
+    reliability_metric: spatially_supported_duration_ms
+    minimum_observability: "> 0 supported GPS time (configurable)"
+    reliability_threshold: null
+    reference: Gonzalez 2008
+
+  implausible_transition_fraction:
+    display_name: Implausible GPS transition fraction
+    category: quality
+    source_stream: gps
+    engine: cortex2
+    native: true
+    module: gps_mobility_features
+    unit: fraction
+    personalized: true
+    reliability_metric: spatially_supported_duration_ms
+    minimum_observability: ">= 1 candidate transition"
+    reliability_threshold: null
+    reference: GPS design doc (this repository)
+
+  location_entropy_nats:
+    display_name: Location entropy (time-weighted)
+    category: mobility
+    source_stream: gps
+    engine: cortex2
+    native: true
+    module: gps_location_features
+    unit: nats
+    personalized: true
+    reliability_metric: assigned_place_time_ms
+    minimum_observability: ">= 1 assigned place"
+    reliability_threshold: null
+    reference: Saeb 2015
+
+  dominant_place_fraction:
+    display_name: Dominant-place time fraction
+    category: mobility
+    source_stream: gps
+    engine: cortex2
+    native: true
+    module: gps_location_features
+    unit: fraction
+    personalized: true
+    reliability_metric: assigned_place_time_ms
+    minimum_observability: ">= 1 assigned place"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  call_count_incoming:
+    display_name: Incoming calls
+    category: communication
+    source_stream: telephony
+    engine: cortex2
+    native: true
+    module: communication
+    unit: count_per_day
+    personalized: true
+    reliability_metric: telephony_n_records
+    minimum_observability: "logger evidence: stream active + 12 h observed"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  call_count_outgoing:
+    display_name: Outgoing calls
+    category: communication
+    source_stream: telephony
+    engine: cortex2
+    native: true
+    module: communication
+    unit: count_per_day
+    personalized: true
+    reliability_metric: telephony_n_records
+    minimum_observability: "logger evidence: stream active + 12 h observed"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  call_count_missed:
+    display_name: Missed calls
+    category: communication
+    source_stream: telephony
+    engine: cortex2
+    native: true
+    module: communication
+    unit: count_per_day
+    personalized: true
+    reliability_metric: telephony_n_records
+    minimum_observability: "logger evidence: stream active + 12 h observed"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  call_duration_ms_incoming:
+    display_name: Incoming call duration
+    category: communication
+    source_stream: telephony
+    engine: cortex2
+    native: true
+    module: communication
+    unit: milliseconds
+    personalized: true
+    reliability_metric: telephony_n_records
+    minimum_observability: "logger evidence: stream active + 12 h observed"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  call_duration_ms_outgoing:
+    display_name: Outgoing call duration
+    category: communication
+    source_stream: telephony
+    engine: cortex2
+    native: true
+    module: communication
+    unit: milliseconds
+    personalized: true
+    reliability_metric: telephony_n_records
+    minimum_observability: "logger evidence: stream active + 12 h observed"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  sms_count_incoming:
+    display_name: Incoming text messages
+    category: communication
+    source_stream: telephony
+    engine: cortex2
+    native: true
+    module: communication
+    unit: count_per_day
+    personalized: true
+    reliability_metric: telephony_n_records
+    minimum_observability: "logger evidence: stream active + 12 h observed"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  sms_count_outgoing:
+    display_name: Outgoing text messages
+    category: communication
+    source_stream: telephony
+    engine: cortex2
+    native: true
+    module: communication
+    unit: count_per_day
+    personalized: true
+    reliability_metric: telephony_n_records
+    minimum_observability: "logger evidence: stream active + 12 h observed"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)

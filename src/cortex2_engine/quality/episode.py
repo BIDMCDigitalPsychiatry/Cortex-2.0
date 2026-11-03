@@ -12,7 +12,6 @@ from cortex2_engine.quality.source_availability import (
     source_interval_overlap,
 )
 
-
 DAY_MS = 86_400_000
 
 STREAM_BIN_SECONDS = {

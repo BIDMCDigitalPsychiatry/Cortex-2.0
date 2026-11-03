@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
 
-import numpy as np
 import pandas as pd
 
 from cortex2_engine.canonical.schemas import load_schema
+from cortex2_engine.canonical.timestamps import datetime_to_epoch_ms
 
 
 @dataclass
@@ -142,10 +142,9 @@ def _check_timestamps(
         )
         return
 
-    reconstructed = (
-        dt.astype("int64")
-        // 1_000_000
-    )
+    reconstructed = datetime_to_epoch_ms(
+        dt
+    ).astype("float64")
 
     diff = (
         reconstructed
@@ -199,6 +198,48 @@ def _check_allowed_events(
         )
 
 
+def _check_allowed_values(
+    df: pd.DataFrame,
+    schema: dict,
+    report: ValidationReport,
+):
+    """Check categorical columns declared under ``allowed_values``.
+
+    Generalises ``allowed_events`` to any column. Missing values are left to
+    the required-null check.
+    """
+
+    allowed_values = schema.get(
+        "allowed_values",
+        {},
+    )
+
+    for col, allowed in allowed_values.items():
+
+        if col not in df.columns:
+            continue
+
+        invalid = (
+            ~df[col].isin(allowed)
+            & df[col].notna()
+        )
+
+        n = int(invalid.sum())
+
+        if n:
+            values = (
+                df.loc[invalid, col]
+                .astype(str)
+                .unique()[:10]
+                .tolist()
+            )
+
+            report.add_error(
+                f"{col}: {n} values outside {allowed}. "
+                f"Examples: {values}"
+            )
+
+
 def validate_canonical(
     df: pd.DataFrame,
     schema_name: str,
@@ -245,6 +286,12 @@ def validate_canonical(
     )
 
     _check_allowed_events(
+        df,
+        schema,
+        report,
+    )
+
+    _check_allowed_values(
         df,
         schema,
         report,

@@ -4,12 +4,10 @@ import pandas as pd
 from cortex2_engine.quality.observability import (
     temporal_quality_metrics,
 )
-
 from cortex2_engine.quality.streams import (
     gps_quality,
     screen_quality,
 )
-
 
 DAY_MS = 86_400_000
 

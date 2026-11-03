@@ -1,0 +1,31 @@
+name: survey
+version: '1.0'
+
+description: >
+  One row per answered survey item. Scoring into instrument totals is done by
+  cortex2_engine.features.survey_scoring, never by the adapter.
+
+required:
+  study_id: string
+  timestamp_ms: int64
+  timestamp_utc: datetime_utc
+  instrument: string
+  item: string
+  source_platform: string
+  source_stream: string
+  source_participant_id: string
+
+optional:
+  participant_id: string
+  episode_id: string
+  device_id: string
+  source_file: string
+  source_record_id: string
+  value_numeric: float64
+  value_text: string
+  response_latency_ms: float64
+  activity_id: string
+
+constraints:
+  response_latency_ms:
+    min: 0

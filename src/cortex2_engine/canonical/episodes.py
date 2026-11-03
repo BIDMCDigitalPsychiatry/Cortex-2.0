@@ -2,6 +2,7 @@ import hashlib
 
 import pandas as pd
 
+from cortex2_engine.canonical.timestamps import datetime_to_epoch_ms
 
 DAY_MS = 86_400_000
 
@@ -97,14 +98,12 @@ def build_episodes_from_windows(
     out["start_utc"] = start
     out["end_utc"] = end
 
-    out["start_ms"] = (
-        start.astype("int64")
-        // 1_000_000
+    out["start_ms"] = datetime_to_epoch_ms(
+        start
     ).astype("int64")
 
-    out["end_ms"] = (
-        end.astype("int64")
-        // 1_000_000
+    out["end_ms"] = datetime_to_epoch_ms(
+        end
     ).astype("int64")
 
     if (

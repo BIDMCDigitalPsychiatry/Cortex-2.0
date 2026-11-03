@@ -263,6 +263,12 @@ Initial status vocabulary:
 
 The feature value should be null whenever a numerical behavioral interpretation is not justified.
 
+> **Implemented vocabulary.** The list above was the initial design. The code contract is
+> `FeatureStatus` in `src/cortex2_engine/features/status.py`, documented in
+> [`status_vocabulary.md`](status_vocabulary.md): `observed_value` → `observed`,
+> `extraction_failure` → `extraction_failed`, `masked` → `analysis_masked`, plus
+> `censored` and `not_applicable`.
+
 ---
 
 # 9. Feature output contract

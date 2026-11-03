@@ -59,13 +59,11 @@ def classify_source_interval(
             "source_end_ms must be greater than source_start_ms"
         )
 
-    if source_end_ms is not None:
-        if requested_start_ms >= source_end_ms:
-            return SourceBoundaryStatus.OUTSIDE_DECLARED_END
+    if source_end_ms is not None and requested_start_ms >= source_end_ms:
+        return SourceBoundaryStatus.OUTSIDE_DECLARED_END
 
-    if source_start_ms is not None:
-        if requested_end_ms <= source_start_ms:
-            return SourceBoundaryStatus.OUTSIDE_DECLARED_START
+    if source_start_ms is not None and requested_end_ms <= source_start_ms:
+        return SourceBoundaryStatus.OUTSIDE_DECLARED_START
 
     if (
         source_start_ms is not None

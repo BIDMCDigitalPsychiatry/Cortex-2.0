@@ -12,7 +12,6 @@ from cortex2_engine.quality.source_availability import (
     source_interval_overlap,
 )
 
-
 HOUR_MS = 3_600_000
 
 STREAM_BIN_SECONDS = {
