@@ -38,6 +38,7 @@ import numpy as np
 import pandas as pd
 
 from cortex2_engine.features.status import FeatureStatus, status_from_counts
+from cortex2_engine.quality.completeness import window_weight
 from cortex2_engine.time import HOUR_MS, local_day_bounds_ms, to_local_clock_hours
 
 ROUTINE_KEYS = ["location_novelty_fraction", "routine_index"]
@@ -77,6 +78,16 @@ def _time_by_place(a: pd.DataFrame, start_ms: int, end_ms: int) -> pd.Series:
     )
 
     return by_place[by_place > 0]
+
+
+def _intervals(a: pd.DataFrame, start_ms: int, end_ms: int) -> list[tuple[float, float]]:
+    """Assignment intervals overlapping ``[start_ms, end_ms)``."""
+
+    s = a["episode_start_ms"].to_numpy(float)
+    e = a["episode_end_ms"].to_numpy(float)
+    keep = (e > start_ms) & (s < end_ms)
+
+    return list(zip(s[keep], e[keep], strict=True))
 
 
 def _as_date(date: dt.date | str) -> dt.date:
@@ -163,6 +174,11 @@ def location_novelty_fraction(
         status = FeatureStatus.INSUFFICIENT_OBSERVABILITY
 
     return {
+        "completeness_weight": window_weight(
+            window_start_ms=start,
+            window_end_ms=end,
+            intervals=_intervals(a, start, end),
+        ),
         "location_novelty_fraction": (
             value
             if status in (FeatureStatus.OBSERVED, FeatureStatus.OBSERVED_ZERO)
@@ -269,7 +285,14 @@ def routine_index(
 
     a = _clean_assignments(assignments)
 
+    start, end = local_day_bounds_ms(day, tz)
+
     out = {
+        "completeness_weight": window_weight(
+            window_start_ms=start,
+            window_end_ms=end,
+            intervals=_intervals(a, start, end),
+        ),
         "routine_index": np.nan,
         "routine_index_status": FeatureStatus.NO_RAW_DATA.value,
         "routine_n_days": 0,

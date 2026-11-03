@@ -45,6 +45,7 @@ from cortex2_engine.features.status import (
     gated_value,
     status_from_counts,
 )
+from cortex2_engine.quality.completeness import completeness_weight_from_mask
 
 ACC_ALGORITHM = "cortex2.acc_daily"
 ACC_ALGORITHM_VERSION = "1.0"
@@ -243,6 +244,15 @@ def compute_daily_activity_features(
         "acc_error_type": None,
         "algorithm": ACC_ALGORITHM,
         "algorithm_version": ACC_ALGORITHM_VERSION,
+        # Worn, observed minutes are the evidence; non-wear counts as missing.
+        "completeness_weight": (
+            completeness_weight_from_mask(
+                ~prepared.minutes["valid"].to_numpy(dtype=bool),
+                bin_size_ms=MINUTE_MS,
+            )
+            if len(prepared.minutes)
+            else 0.0
+        ),
     }
 
     if prepared.n_samples == 0:

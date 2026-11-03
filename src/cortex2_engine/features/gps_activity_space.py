@@ -41,12 +41,17 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from cortex2_engine.features.gps_geometry import edge_midpoints, project_local_m
+from cortex2_engine.features.gps_geometry import (
+    edge_midpoints,
+    project_local_m,
+    supported_intervals,
+)
 from cortex2_engine.features.status import (
     FeatureStatus,
     gated_value,
     status_from_counts,
 )
+from cortex2_engine.quality.completeness import window_weight
 
 M2_PER_KM2 = 1_000_000.0
 
@@ -205,6 +210,8 @@ def compute_daily_activity_space(
     *,
     min_supported_ms: float = 21_600_000,
     median_accuracy_m: float | None = None,
+    window_start_ms: int | None = None,
+    window_end_ms: int | None = None,
 ) -> dict:
     """Activity-space features for one participant-day.
 
@@ -218,6 +225,8 @@ def compute_daily_activity_space(
         Median reported accuracy radius. When ``None`` it is the median of
         the edges' ``start_accuracy``/``end_accuracy``; if those are absent
         the ``observed_zero`` floor is not applied.
+    window_start_ms, window_end_ms
+        Optional day bounds for ``completeness_weight`` (NaN without them).
 
     Returns
     -------
@@ -295,5 +304,10 @@ def compute_daily_activity_space(
     out["activity_space_n_points"] = n_points
     out["supported_duration_ms"] = supported_ms
     out["zero_area_floor_km2"] = floor_km2
+    out["completeness_weight"] = window_weight(
+        window_start_ms=window_start_ms,
+        window_end_ms=window_end_ms,
+        intervals=supported_intervals(edges) if window_start_ms is not None else None,
+    )
 
     return out

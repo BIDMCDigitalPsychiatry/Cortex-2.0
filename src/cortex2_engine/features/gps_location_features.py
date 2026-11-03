@@ -14,12 +14,15 @@ import numpy as np
 import pandas as pd
 
 from cortex2_engine.features.status import FeatureStatus
+from cortex2_engine.quality.completeness import window_weight
 
 
 def compute_daily_location_features(
     assignments: pd.DataFrame,
     *,
     supported_duration_ms: float | None = None,
+    window_start_ms: int | None = None,
+    window_end_ms: int | None = None,
 ) -> dict:
     """Compute daily time-weighted location features.
 
@@ -33,6 +36,10 @@ def compute_daily_location_features(
 
     supported_duration_ms
         Total temporally supported GPS duration for the day, if known.
+
+    window_start_ms, window_end_ms
+        Optional day bounds for ``completeness_weight`` (conservative bound
+        from ``supported_duration_ms``; NaN without them).
 
     Returns
     -------
@@ -101,6 +108,13 @@ def compute_daily_location_features(
     if x.empty:
 
         return {
+            "completeness_weight":
+                window_weight(
+                    window_start_ms=window_start_ms,
+                    window_end_ms=window_end_ms,
+                    observed_ms=supported_duration_ms,
+                ),
+
             "location_entropy_nats":
                 np.nan,
 
@@ -259,6 +273,13 @@ def compute_daily_location_features(
         unassigned_supported = np.nan
 
     return {
+        "completeness_weight":
+            window_weight(
+                window_start_ms=window_start_ms,
+                window_end_ms=window_end_ms,
+                observed_ms=supported_duration_ms,
+            ),
+
         "location_entropy_nats":
             entropy,
 

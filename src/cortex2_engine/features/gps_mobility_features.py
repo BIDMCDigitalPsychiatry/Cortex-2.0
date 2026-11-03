@@ -14,6 +14,7 @@ import math
 import numpy as np
 import pandas as pd
 
+from cortex2_engine.features.gps_geometry import supported_intervals
 from cortex2_engine.features.gps_intervals import (
     haversine_km,
 )
@@ -25,12 +26,15 @@ from cortex2_engine.features.status import (
     gated_value,
     status_from_counts,
 )
+from cortex2_engine.quality.completeness import window_weight
 
 
 def compute_daily_mobility_features(
     edges: pd.DataFrame,
     *,
     minimum_supported_duration_ms: float = 0.0,
+    window_start_ms: int | None = None,
+    window_end_ms: int | None = None,
 ) -> dict:
     """Compute conservative daily GPS mobility summaries.
 
@@ -49,6 +53,8 @@ def compute_daily_mobility_features(
         - distance_m
         - trajectory_status
 
+    window_start_ms, window_end_ms
+        Optional day bounds for ``completeness_weight`` (NaN without them).
     minimum_supported_duration_ms
         Minimum spatially supported time for the distance, radius and
         implausible-fraction values to be interpreted. Default 0 keeps the
@@ -303,6 +309,17 @@ def compute_daily_mobility_features(
     )
 
     return {
+        "completeness_weight":
+            window_weight(
+                window_start_ms=window_start_ms,
+                window_end_ms=window_end_ms,
+                intervals=(
+                    supported_intervals(edges)
+                    if window_start_ms is not None
+                    else None
+                ),
+            ),
+
         "supported_displacement_distance_m":
             gated_value(
                 supported_displacement_distance_m,

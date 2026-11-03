@@ -159,3 +159,17 @@ def edge_midpoints(
         ((x["start_ms"] + x["end_ms"]) / 2.0).to_numpy(),
         x["duration_ms"].to_numpy(dtype=float),
     )
+
+
+def supported_intervals(edges) -> list[tuple[float, float]]:
+    """``(start_ms, end_ms)`` of supported edges with positive duration."""
+
+    if edges is None or len(edges) == 0 or "supported" not in edges.columns:
+        return []
+
+    x = edges[edges["supported"].fillna(False).astype(bool)]
+    start = pd.to_numeric(x["start_ms"], errors="coerce").to_numpy(float)
+    end = pd.to_numeric(x["end_ms"], errors="coerce").to_numpy(float)
+    keep = np.isfinite(start) & np.isfinite(end) & (end > start)
+
+    return list(zip(start[keep], end[keep], strict=True))

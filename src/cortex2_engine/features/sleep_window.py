@@ -44,6 +44,7 @@ import numpy as np
 import pandas as pd
 
 from cortex2_engine.features.status import FeatureStatus
+from cortex2_engine.quality.completeness import completeness_weight_from_coverage
 from cortex2_engine.time import (
     parse_clock,
     to_local_clock_hours,
@@ -171,6 +172,10 @@ def _empty_result(
         "night_coverage_fraction": coverage,
         "night_start_ms": night_start_ms,
         "night_end_ms": night_end_ms,
+        "completeness_weight": completeness_weight_from_coverage(
+            coverage * (night_end_ms - night_start_ms),
+            night_end_ms - night_start_ms,
+        ),
     })
 
     return out
@@ -413,6 +418,10 @@ def detect_sleep_window(
         "night_coverage_fraction": coverage,
         "night_start_ms": night_start_ms,
         "night_end_ms": night_end_ms,
+        "completeness_weight": completeness_weight_from_coverage(
+            coverage * (night_end_ms - night_start_ms),
+            night_end_ms - night_start_ms,
+        ),
     }
 
     for key in SLEEP_KEYS:

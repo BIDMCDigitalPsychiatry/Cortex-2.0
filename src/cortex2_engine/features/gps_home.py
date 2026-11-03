@@ -41,13 +41,14 @@ import datetime as dt
 import numpy as np
 import pandas as pd
 
-from cortex2_engine.features.gps_geometry import haversine_m
+from cortex2_engine.features.gps_geometry import haversine_m, supported_intervals
 from cortex2_engine.features.screen_bouts import local_clock_intervals
 from cortex2_engine.features.status import (
     FeatureStatus,
     gated_value,
     status_from_counts,
 )
+from cortex2_engine.quality.completeness import window_weight
 from cortex2_engine.time import local_dates, local_day_bounds_ms
 
 
@@ -250,6 +251,8 @@ def compute_daily_home_time(
     *,
     r_min_m: float = 50.0,
     min_supported_ms: float = 21_600_000,
+    window_start_ms: int | None = None,
+    window_end_ms: int | None = None,
 ) -> dict:
     """Observed time at home for one participant-day.
 
@@ -264,6 +267,8 @@ def compute_daily_home_time(
         Minimum home radius (used when the home record has none).
     min_supported_ms
         Minimum supported GPS time for the day (6 h).
+    window_start_ms, window_end_ms
+        Optional day bounds for ``completeness_weight`` (NaN without them).
 
     Returns
     -------
@@ -297,6 +302,11 @@ def compute_daily_home_time(
     x = x[(x["duration_ms"] > 0)].dropna(subset=list(required - {"supported"}))
 
     supported_ms = float(x["duration_ms"].sum())
+    weight = window_weight(
+        window_start_ms=window_start_ms,
+        window_end_ms=window_end_ms,
+        intervals=supported_intervals(edges) if window_start_ms is not None else None,
+    )
 
     home_status = FeatureStatus(home.get("home_status", "no_raw_data"))
 
@@ -313,6 +323,7 @@ def compute_daily_home_time(
             "home_time_fraction": np.nan,
             "home_time_fraction_status": status.value,
             "supported_duration_ms": supported_ms,
+            "completeness_weight": weight,
         }
 
     radius = float(home.get("home_radius_m") or r_min_m)
@@ -354,5 +365,6 @@ def compute_daily_home_time(
         out[f"{key}_status"] = status.value
 
     out["supported_duration_ms"] = supported_ms
+    out["completeness_weight"] = weight
 
     return out

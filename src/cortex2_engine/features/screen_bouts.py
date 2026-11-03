@@ -41,6 +41,7 @@ from cortex2_engine.features.status import (
     gated_value,
     status_from_counts,
 )
+from cortex2_engine.quality.completeness import window_weight
 from cortex2_engine.time import HOUR_MS, coerce_timestamp_ms, parse_clock
 
 ON_EVENTS = frozenset({"screen_on", "unlock"})
@@ -481,5 +482,11 @@ def compute_daily_screen_features(
 
     out["n_censored_bouts"] = int(censored.sum())
     out["supported_duration_ms"] = supported_duration_ms
+
+    out["completeness_weight"] = window_weight(
+        window_start_ms=window_start_ms,
+        window_end_ms=window_end_ms,
+        observed_ms=supported_duration_ms,
+    )
 
     return out

@@ -853,3 +853,33 @@ features:
     minimum_observability: ">= 5 of 7 items"
     reliability_threshold: null
     reference: Spitzer 2006
+
+  # --- Phase 7: completeness and missingness (docs/features/missingness.md) ---
+
+  completeness_weight:
+    display_name: Participant-day completeness weight
+    category: quality
+    source_stream: all
+    engine: cortex2
+    native: true
+    module: quality.completeness
+    unit: weight_0_1
+    personalized: false
+    reliability_metric: completeness_weight
+    minimum_observability: "none (weight, not a feature)"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work; definition in docs/features/missingness.md)
+
+  missingness_phenotype:
+    display_name: Daily missingness phenotype
+    category: quality
+    source_stream: gps+accelerometer+screen
+    engine: cortex2
+    native: true
+    module: missingness.phenotype
+    unit: category
+    personalized: false
+    reliability_metric: n_eligible_hours
+    minimum_observability: ">= 12 eligible hours"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work; docs/gps_missingness_wifi_module.md onset regimes)

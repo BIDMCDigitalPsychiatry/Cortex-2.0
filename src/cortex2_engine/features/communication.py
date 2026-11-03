@@ -51,6 +51,7 @@ import numpy as np
 import pandas as pd
 
 from cortex2_engine.features.status import FeatureStatus
+from cortex2_engine.quality.completeness import window_weight
 from cortex2_engine.time import local_day_bounds_ms
 
 COUNT_KEYS = [
@@ -147,7 +148,13 @@ def compute_communication_features(
             "Missing required telephony columns: " + ", ".join(sorted(missing))
         )
 
-    out: dict = {}
+    out: dict = {
+        f"completeness_weight{suffix}": window_weight(
+            window_start_ms=window_start_ms,
+            window_end_ms=window_end_ms,
+            observed_ms=source_observed_ms,
+        ),
+    }
 
     t = pd.to_numeric(telephony["timestamp_ms"], errors="coerce")
     x = telephony[(t >= window_start_ms) & (t < window_end_ms)]

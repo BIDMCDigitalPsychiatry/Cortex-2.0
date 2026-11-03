@@ -96,6 +96,7 @@ def compute_wearable_sleep(
 
         out["healthkit_n_segments"] = 0
         out["healthkit_n_unknown_segments"] = 0
+        out["completeness_weight"] = np.nan
 
         return out
 
@@ -151,5 +152,7 @@ def compute_wearable_sleep(
     out["healthkit_n_unknown_segments"] = int(
         segments["representation"].eq("unknown").sum()
     )
+    # Device-reported segments carry no observed-time denominator.
+    out["completeness_weight"] = np.nan
 
     return out

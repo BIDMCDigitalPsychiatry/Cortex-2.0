@@ -252,3 +252,30 @@ Specifications: `docs/features/communication.md`, `docs/features/cognition_surve
 ### References
 Monk et al. 1990; Shannon 1948; MacDonald et al. 2006; Olivier & Norberg 2010; Kroenke et
 al. 2001; Spitzer et al. 2006.
+
+## Phase 7 — Completeness weight and missingness phenotype
+
+Specification: `docs/features/missingness.md`.
+
+### Added
+- `quality/completeness.py`: `participant_day_completeness_weight(coverage_fraction,
+  longest_gap_ms, n_missing_runs, n_bins, *, alpha=1.0, beta=1.0, bin_size_ms=3_600_000)`
+  = coverage^α × (1 − longest-gap fraction)^β; `multi_stream_weight` (geometric mean);
+  mask, interval and conservative-coverage helpers; `window_weight`.
+- `completeness_weight` in every daily feature dict: accelerometer, screen, phone sleep,
+  wearable sleep (NaN by design), GPS mobility, location, home time, activity space,
+  novelty, routine and communication (`completeness_weight_7d` for weekly windows). GPS
+  daily functions gain optional `window_start_ms` / `window_end_ms` keywords; without them
+  the weight is NaN.
+- `missingness/phenotype.py`: `daily_missingness_phenotype(hourly, *, tz,
+  day_start="00:00", min_eligible_hours=12, max_gap_fraction_complete=0.1,
+  dominance_fraction=0.6, low_battery_fraction=0.15)` with six classes (`no_signal`,
+  `complete`, `battery_depletion`, `shared_interruption`, `gps_specific_dropout`,
+  `mixed`), built on `add_hourly_missingness_transitions` and `battery_last`.
+- Tests: `test_completeness.py`, `test_missingness_phenotype.py` (13).
+
+### Registry
+- `completeness_weight` and `missingness_phenotype` (category `quality`).
+
+### References
+Onset regimes: `docs/gps_missingness_wifi_module.md` (this repository).
