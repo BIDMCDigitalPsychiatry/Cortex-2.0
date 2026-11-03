@@ -144,3 +144,35 @@ Specification: `docs/features/accelerometer.md`.
 ### References
 van Hees 2011 (PLoS ONE 6:e22922); van Hees 2013 (PLoS ONE 8:e61691); Van Someren 1999
 (Chronobiol Int 16:505); Witting 1990 (Biol Psychiatry 27:563); Di 2017 (bioRxiv 182337).
+
+## Phase 4 — Screen and sleep
+
+Specifications: `docs/features/screen.md`, `docs/features/sleep.md`.
+
+### Added
+- `features/screen_bouts.py`: `build_screen_bouts(screen, *, window_start_ms,
+  window_end_ms, max_bout_ms=14_400_000, debounce_ms=1000)`. Bouts over the cap, open at the
+  window end, or carried in from before the window are **kept** with `bout_status =
+  censored` and a `censor_reason`. Also `screen_supported_duration_ms(…,
+  max_silence_ms=43_200_000)`, `local_clock_intervals` (DST-aware recurring clock windows)
+  and `compute_daily_screen_features(bouts, *, supported_duration_ms, tz,
+  window_start_ms, window_end_ms, nocturnal_start_local="22:00",
+  nocturnal_end_local="06:00", micro_bout_ms=30_000, min_supported_ms=43_200_000)`.
+- `features/sleep_window.py`: `night_window_ms` and `detect_sleep_window(screen_bouts,
+  acc_epochs, *, night_date, tz, night_start_local="18:00", night_end_local="12:00",
+  grid_ms=300_000, wake_tolerance_ms=1_200_000, still_threshold_mg=10.0,
+  min_coverage_fraction=0.7, screen_events=None, device_usage=None)`. Screen-dark run with
+  awakening merging and accelerometer edge trimming (after Borger et al. 2019). The night is
+  attributed to its end date.
+- `features/wearable_sleep.py`: `compute_wearable_sleep(sleep, *, night_start_ms,
+  night_end_ms, source_available=True)` giving `healthkit_sleep_duration_ms`,
+  `healthkit_in_bed_ms` and `healthkit_awake_ms` (union lengths; unreported categories are
+  `not_applicable`).
+- Tests: `test_screen_bouts.py`, `test_sleep_window.py`, `test_wearable_sleep.py` (31).
+
+### Registry
+- 15 entries (screen totals and rates, nocturnal variants, phone sleep window, wearable sleep).
+
+### References
+Borger, Huber & Ghosh 2019 (npj Digit Med 2:73); Apple HealthKit
+`HKCategoryValueSleepAnalysis`.

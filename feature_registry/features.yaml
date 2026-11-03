@@ -315,3 +315,215 @@ features:
     minimum_observability: "5 valid days"
     reliability_threshold: null
     reference: Van Someren 1999
+
+  # --- Phase 4: screen and sleep (docs/features/screen.md, sleep.md) ---
+
+  screen_on_ms:
+    display_name: Screen-on time
+    category: behavior
+    source_stream: screen
+    engine: cortex2
+    native: true
+    module: screen_bouts
+    unit: milliseconds_per_day
+    personalized: true
+    reliability_metric: screen_supported_duration_ms
+    minimum_observability: "43200000 ms supported"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  n_bouts:
+    display_name: Screen bouts
+    category: behavior
+    source_stream: screen
+    engine: cortex2
+    native: true
+    module: screen_bouts
+    unit: count_per_day
+    personalized: true
+    reliability_metric: screen_supported_duration_ms
+    minimum_observability: "43200000 ms supported"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  median_bout_ms:
+    display_name: Median screen bout
+    category: behavior
+    source_stream: screen
+    engine: cortex2
+    native: true
+    module: screen_bouts
+    unit: milliseconds
+    personalized: true
+    reliability_metric: screen_supported_duration_ms
+    minimum_observability: "43200000 ms supported; >= 1 uncensored bout"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  micro_bout_rate_per_hour:
+    display_name: Screen micro-bout rate
+    category: behavior
+    source_stream: screen
+    engine: cortex2
+    native: true
+    module: screen_bouts
+    unit: per_supported_hour
+    personalized: true
+    reliability_metric: screen_supported_duration_ms
+    minimum_observability: "43200000 ms supported"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  screen_fragmentation_index:
+    display_name: Screen fragmentation index
+    category: behavior
+    source_stream: screen
+    engine: cortex2
+    native: true
+    module: screen_bouts
+    unit: bouts_per_screen_on_hour
+    personalized: true
+    reliability_metric: screen_supported_duration_ms
+    minimum_observability: "43200000 ms supported; screen_on_ms > 0"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  nocturnal_screen_on_ms:
+    display_name: Nocturnal screen-on time
+    category: sleep
+    source_stream: screen
+    engine: cortex2
+    native: true
+    module: screen_bouts
+    unit: milliseconds_per_day
+    personalized: true
+    reliability_metric: screen_supported_duration_ms
+    minimum_observability: "43200000 ms supported"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  nocturnal_n_bouts:
+    display_name: Nocturnal screen bouts
+    category: sleep
+    source_stream: screen
+    engine: cortex2
+    native: true
+    module: screen_bouts
+    unit: count_per_day
+    personalized: true
+    reliability_metric: screen_supported_duration_ms
+    minimum_observability: "43200000 ms supported"
+    reliability_threshold: null
+    reference: Cortex 2.0 (this work)
+
+  sleep_duration_ms:
+    display_name: Phone-rest (sleep) window duration
+    category: sleep
+    source_stream: screen+accelerometer
+    engine: cortex2
+    native: true
+    module: sleep_window
+    unit: milliseconds
+    personalized: true
+    reliability_metric: night_coverage_fraction
+    minimum_observability: "0.7 night coverage"
+    reliability_threshold: null
+    reference: Borger 2019
+
+  sleep_onset_local_h:
+    display_name: Sleep onset (phone)
+    category: sleep
+    source_stream: screen+accelerometer
+    engine: cortex2
+    native: true
+    module: sleep_window
+    unit: local_clock_hour
+    personalized: true
+    reliability_metric: night_coverage_fraction
+    minimum_observability: "0.7 night coverage"
+    reliability_threshold: null
+    reference: Borger 2019
+
+  sleep_offset_local_h:
+    display_name: Sleep offset (phone)
+    category: sleep
+    source_stream: screen+accelerometer
+    engine: cortex2
+    native: true
+    module: sleep_window
+    unit: local_clock_hour
+    personalized: true
+    reliability_metric: night_coverage_fraction
+    minimum_observability: "0.7 night coverage"
+    reliability_threshold: null
+    reference: Borger 2019
+
+  sleep_midpoint_local_h:
+    display_name: Sleep midpoint (phone)
+    category: sleep
+    source_stream: screen+accelerometer
+    engine: cortex2
+    native: true
+    module: sleep_window
+    unit: local_clock_hour
+    personalized: true
+    reliability_metric: night_coverage_fraction
+    minimum_observability: "0.7 night coverage"
+    reliability_threshold: null
+    reference: Borger 2019
+
+  n_awakenings:
+    display_name: Night awakenings (phone)
+    category: sleep
+    source_stream: screen+accelerometer
+    engine: cortex2
+    native: true
+    module: sleep_window
+    unit: count_per_night
+    personalized: true
+    reliability_metric: night_coverage_fraction
+    minimum_observability: "0.7 night coverage"
+    reliability_threshold: null
+    reference: Borger 2019
+
+  healthkit_sleep_duration_ms:
+    display_name: Wearable sleep duration
+    category: sleep
+    source_stream: sleep
+    engine: cortex2
+    native: true
+    module: wearable_sleep
+    unit: milliseconds
+    personalized: true
+    reliability_metric: healthkit_n_segments
+    minimum_observability: ">= 1 segment"
+    reliability_threshold: null
+    reference: Apple HealthKit HKCategoryValueSleepAnalysis
+
+  healthkit_in_bed_ms:
+    display_name: Wearable in-bed time
+    category: sleep
+    source_stream: sleep
+    engine: cortex2
+    native: true
+    module: wearable_sleep
+    unit: milliseconds
+    personalized: true
+    reliability_metric: healthkit_n_segments
+    minimum_observability: ">= 1 in_bed segment"
+    reliability_threshold: null
+    reference: Apple HealthKit HKCategoryValueSleepAnalysis
+
+  healthkit_awake_ms:
+    display_name: Wearable awake-in-bed time
+    category: sleep
+    source_stream: sleep
+    engine: cortex2
+    native: true
+    module: wearable_sleep
+    unit: milliseconds
+    personalized: true
+    reliability_metric: healthkit_n_segments
+    minimum_observability: ">= 1 in_awake segment"
+    reliability_threshold: null
+    reference: Apple HealthKit HKCategoryValueSleepAnalysis
