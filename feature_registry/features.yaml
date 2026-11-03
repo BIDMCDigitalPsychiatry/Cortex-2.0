@@ -103,3 +103,215 @@ features:
     personalized: true
     reliability_metric: gps_data_quality
     reliability_threshold: null
+
+  # --- Phase 3: accelerometer (docs/features/accelerometer.md) ---
+
+  mean_enmo_mg:
+    display_name: Mean ENMO (worn time)
+    category: activity
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_daily
+    unit: mg
+    personalized: true
+    reliability_metric: acc_valid_minutes
+    minimum_observability: "600 valid minutes"
+    reliability_threshold: null
+    reference: van Hees 2013
+
+  acc_nonwear_fraction:
+    display_name: Phone not-carried fraction
+    category: observability
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_nonwear
+    unit: fraction
+    personalized: true
+    reliability_metric: acc_evaluable_ms
+    minimum_observability: "3600000 ms judged"
+    reliability_threshold: null
+    reference: van Hees 2011
+
+  active_minutes:
+    display_name: Active minutes
+    category: activity
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_fragmentation
+    unit: minutes_per_day
+    personalized: true
+    reliability_metric: acc_valid_minutes
+    minimum_observability: "600 valid minutes"
+    reliability_threshold: null
+    reference: Di 2017
+
+  sedentary_minutes:
+    display_name: Sedentary minutes
+    category: activity
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_fragmentation
+    unit: minutes_per_day
+    personalized: true
+    reliability_metric: acc_valid_minutes
+    minimum_observability: "600 valid minutes"
+    reliability_threshold: null
+    reference: Di 2017
+
+  astp_per_min:
+    display_name: Active-to-sedentary transition probability
+    category: activity
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_fragmentation
+    unit: per_minute
+    personalized: true
+    reliability_metric: acc_valid_minutes
+    minimum_observability: "600 valid minutes"
+    reliability_threshold: null
+    reference: Di 2017
+
+  satp_per_min:
+    display_name: Sedentary-to-active transition probability
+    category: activity
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_fragmentation
+    unit: per_minute
+    personalized: true
+    reliability_metric: acc_valid_minutes
+    minimum_observability: "600 valid minutes"
+    reliability_threshold: null
+    reference: Di 2017
+
+  mean_active_bout_min:
+    display_name: Mean active bout length
+    category: activity
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_fragmentation
+    unit: minutes
+    personalized: true
+    reliability_metric: acc_valid_minutes
+    minimum_observability: "600 valid minutes"
+    reliability_threshold: null
+    reference: Di 2017
+
+  active_bout_gini:
+    display_name: Active bout Gini
+    category: activity
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_fragmentation
+    unit: index
+    personalized: true
+    reliability_metric: acc_valid_minutes
+    minimum_observability: "600 valid minutes; >= 2 bouts"
+    reliability_threshold: null
+    reference: Di 2017
+
+  interdaily_stability:
+    display_name: Interdaily stability
+    category: circadian
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_circadian
+    unit: index
+    personalized: true
+    reliability_metric: n_days_valid
+    minimum_observability: "5 valid days of >= 18 observed hours; <= 20% cells excluded"
+    reliability_threshold: null
+    reference: Van Someren 1999
+
+  intradaily_variability:
+    display_name: Intradaily variability
+    category: circadian
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_circadian
+    unit: index
+    personalized: true
+    reliability_metric: n_days_valid
+    minimum_observability: "5 valid days of >= 18 observed hours; <= 20% cells excluded"
+    reliability_threshold: null
+    reference: Van Someren 1999
+
+  relative_amplitude:
+    display_name: Relative amplitude
+    category: circadian
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_circadian
+    unit: index
+    personalized: true
+    reliability_metric: n_days_valid
+    minimum_observability: "5 valid days of >= 18 observed hours; <= 20% cells excluded"
+    reliability_threshold: null
+    reference: Van Someren 1999
+
+  m10_mg:
+    display_name: Most active 10 h (M10)
+    category: circadian
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_circadian
+    unit: mg
+    personalized: true
+    reliability_metric: n_days_valid
+    minimum_observability: "5 valid days"
+    reliability_threshold: null
+    reference: Van Someren 1999
+
+  l5_mg:
+    display_name: Least active 5 h (L5)
+    category: circadian
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_circadian
+    unit: mg
+    personalized: true
+    reliability_metric: n_days_valid
+    minimum_observability: "5 valid days"
+    reliability_threshold: null
+    reference: Van Someren 1999
+
+  m10_onset_local_h:
+    display_name: M10 onset
+    category: circadian
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_circadian
+    unit: local_clock_hour
+    personalized: true
+    reliability_metric: n_days_valid
+    minimum_observability: "5 valid days"
+    reliability_threshold: null
+    reference: Van Someren 1999
+
+  l5_onset_local_h:
+    display_name: L5 onset
+    category: circadian
+    source_stream: accelerometer
+    engine: cortex2
+    native: true
+    module: acc_circadian
+    unit: local_clock_hour
+    personalized: true
+    reliability_metric: n_days_valid
+    minimum_observability: "5 valid days"
+    reliability_threshold: null
+    reference: Van Someren 1999

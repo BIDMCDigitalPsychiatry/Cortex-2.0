@@ -103,3 +103,44 @@ reported 68 findings.
 ### Registry
 - No new features. Status semantics for existing entries are now those of
   `docs/status_vocabulary.md`.
+
+## Phase 3 — Accelerometer feature family
+
+Specification: `docs/features/accelerometer.md`.
+
+### Added
+- `features/acc_preprocess.py`: `detect_unit(acc, *, gravity_band_g=(0.7, 1.3))`,
+  `enmo_g(x, y, z)`, `resample_to_epochs(acc, *, window_start_ms, window_end_ms,
+  epoch_ms=1000, unit=None)` (1 s epochs with exact SD/range sufficient statistics),
+  `aggregate_epochs(epochs, *, epoch_ms=60_000, min_observed_fraction=0.5, exclude=None)`.
+- `features/acc_nonwear.py`: `detect_nonwear(epochs, *, window_ms=3_600_000,
+  step_ms=900_000, sd_threshold_mg=13.0, range_threshold_mg=50.0, min_axes=2,
+  min_window_observed_fraction=0.5, battery=None, charging_min_rise_fraction=0.01,
+  minimum_evaluable_ms=3_600_000)`, returning the epoch mask, intervals and a daily summary.
+  van Hees et al. 2011 (GGIR form: SD **and** range per axis), with the phone adaptation:
+  unobserved ≠ non-wear, union of still windows, charging annotation.
+- `features/acc_circadian.py`: `hourly_activity_matrix` (DST-aware clock hours, contiguous
+  days), `interdaily_stability`, `intradaily_variability`, `relative_amplitude`
+  (M10/L5 with onsets) and `compute_circadian_features`. Defaults: `min_days=5`,
+  `min_observed_hours_per_day=18`, `max_excluded_fraction=0.2`. Van Someren et al. 1999 /
+  Witting et al. 1990 formulas with explicit missing-hour handling.
+- `features/acc_fragmentation.py`: `activity_fragmentation(epochs_1min, *,
+  active_threshold_mg=30.0, min_valid_minutes=600)` returning ASTP, SATP, mean active bout,
+  active-bout Gini, active and sedentary minutes, and censored-bout count (Di et al. 2017);
+  `gini_coefficient`.
+- `features/acc_daily.py`: `prepare_minute_epochs` and `compute_daily_activity_features`
+  (flat participant-day dict; `algorithm = cortex2.acc_daily` v1.0).
+- Tests: `test_acc_preprocess.py`, `test_acc_nonwear.py`, `test_acc_circadian.py`,
+  `test_acc_fragmentation.py`, `test_acc_daily.py` (43), with the synthetic generator
+  `tests/acc_synthetic.py`. They cover an analytic sinusoid (IS = 1, IV → 4 sin²(π/24)),
+  white noise (IV ≈ 2), 6 h of injected non-wear recovered exactly, g vs m/s² unit
+  confusion, and a 23 h DST day.
+
+### Registry
+- 15 entries (`mean_enmo_mg`, `acc_nonwear_fraction`, fragmentation and circadian
+  features), with `engine: cortex2`, `native: true`, `minimum_observability` and
+  `reference`.
+
+### References
+van Hees 2011 (PLoS ONE 6:e22922); van Hees 2013 (PLoS ONE 8:e61691); Van Someren 1999
+(Chronobiol Int 16:505); Witting 1990 (Biol Psychiatry 27:563); Di 2017 (bioRxiv 182337).

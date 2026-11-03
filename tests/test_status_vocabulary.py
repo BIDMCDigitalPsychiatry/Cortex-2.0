@@ -34,11 +34,22 @@ def _is_status_key(name: str) -> bool:
 
 
 def _string_constants(node: ast.AST) -> list[str]:
-    return [
-        n.value
-        for n in ast.walk(node)
-        if isinstance(n, ast.Constant) and isinstance(n.value, str)
-    ]
+    """String literals that can become the status value itself.
+
+    Direct constants and the branches of conditional / boolean expressions
+    count; strings used as arguments (column names, messages) do not.
+    """
+
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return [node.value]
+
+    if isinstance(node, ast.IfExp):
+        return _string_constants(node.body) + _string_constants(node.orelse)
+
+    if isinstance(node, ast.BoolOp):
+        return [s for v in node.values for s in _string_constants(v)]
+
+    return []
 
 
 def _emitted_status_literals(tree: ast.AST) -> list[tuple[int, str]]:
@@ -135,13 +146,14 @@ def test_scanner_detects_a_bad_literal():
 
     tree = ast.parse(
         'out = {"x_status": "observed_value"}\n'
-        'y_status = "observed"\n'
+        'y_status = "observed" if a else "no_raw_data"\n'
+        'z_status = f(df["n_samples"])\n'
         'result["spatial_status"] = "temporal_gap"\n'
     )
 
     values = [v for _, v in _emitted_status_literals(tree)]
 
-    assert sorted(values) == ["observed", "observed_value"]
+    assert sorted(values) == ["no_raw_data", "observed", "observed_value"]
 
 
 def test_vocabulary_is_exactly_the_documented_set():
