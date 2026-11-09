@@ -368,62 +368,6 @@ for participant_id, participant_raw in raw.groupby(
         ] = date
 
 
-        midpoint_ms = (
-            (
-                pd.to_numeric(
-                    microsegments[
-                        "episode_start_ms"
-                    ],
-                    errors="coerce",
-                )
-                + pd.to_numeric(
-                    microsegments[
-                        "episode_end_ms"
-                    ],
-                    errors="coerce",
-                )
-            )
-            / 2.0
-        )
-
-
-        local_time = (
-            pd.to_datetime(
-                midpoint_ms,
-                unit="ms",
-                utc=True,
-            )
-            .dt.tz_convert(
-                LOCAL_TIMEZONE
-            )
-        )
-
-
-        microsegments[
-            "local_hour"
-        ] = (
-            local_time.dt.hour
-        )
-
-
-        microsegments[
-            "is_nighttime"
-        ] = (
-            (
-                microsegments[
-                    "local_hour"
-                ]
-                >= NIGHT_START_HOUR
-            )
-            & (
-                microsegments[
-                    "local_hour"
-                ]
-                < NIGHT_END_HOUR
-            )
-        )
-
-
         all_microsegments.append(
             microsegments
         )
@@ -477,8 +421,6 @@ for participant_id, participant_raw in raw.groupby(
     # implementation does not propagate every extra column.
     for col in [
         "date",
-        "local_hour",
-        "is_nighttime",
     ]:
 
         if (
@@ -539,6 +481,34 @@ for participant_id, participant_raw in raw.groupby(
             "No valid place intervals for home inference."
         )
 
+        home_anchor_rows.append(
+            {
+                "participant_id":
+                    participant_id,
+
+                "home_place_candidate_id":
+                    np.nan,
+
+                "home_status":
+                    "insufficient_observability",
+
+                "home_reason":
+                    "no_valid_place_intervals",
+
+                "home_confidence":
+                    np.nan,
+
+                "home_n_valid_nights":
+                    0,
+
+                "home_n_nights_at_home":
+                    0,
+
+                "n_persistent_places":
+                    len(places),
+            }
+        )
+
         continue
 
 
@@ -571,28 +541,19 @@ for participant_id, participant_raw in raw.groupby(
 
     for local_date in reference_dates:
 
-        night_start = (
-            pd.Timestamp(
-                local_date
-            )
-            .tz_localize(
-                LOCAL_TIMEZONE
-            )
-            + pd.Timedelta(
-                hours=NIGHT_START_HOUR
-            )
+        # Construct local clock boundaries independently.
+        # This preserves exactly 00:00-06:00 local time across
+        # daylight-saving transitions.
+        night_start = pd.Timestamp(
+            f"{local_date} {NIGHT_START_HOUR:02d}:00:00"
+        ).tz_localize(
+            LOCAL_TIMEZONE
         )
 
-        night_end = (
-            pd.Timestamp(
-                local_date
-            )
-            .tz_localize(
-                LOCAL_TIMEZONE
-            )
-            + pd.Timedelta(
-                hours=NIGHT_END_HOUR
-            )
+        night_end = pd.Timestamp(
+            f"{local_date} {NIGHT_END_HOUR:02d}:00:00"
+        ).tz_localize(
+            LOCAL_TIMEZONE
         )
 
         night_start_ms = int(
@@ -720,6 +681,34 @@ for participant_id, participant_raw in raw.groupby(
             "valid nights",
         )
 
+        home_anchor_rows.append(
+            {
+                "participant_id":
+                    participant_id,
+
+                "home_place_candidate_id":
+                    np.nan,
+
+                "home_status":
+                    "insufficient_observability",
+
+                "home_reason":
+                    "too_few_valid_nights",
+
+                "home_confidence":
+                    np.nan,
+
+                "home_n_valid_nights":
+                    n_valid_nights,
+
+                "home_n_nights_at_home":
+                    0,
+
+                "n_persistent_places":
+                    len(places),
+            }
+        )
+
         continue
 
 
@@ -774,6 +763,34 @@ for participant_id, participant_raw in raw.groupby(
         print(
             "Inconsistent nighttime home evidence:",
             f"confidence={home_confidence:.3f}",
+        )
+
+        home_anchor_rows.append(
+            {
+                "participant_id":
+                    participant_id,
+
+                "home_place_candidate_id":
+                    np.nan,
+
+                "home_status":
+                    "insufficient_observability",
+
+                "home_reason":
+                    "low_home_confidence",
+
+                "home_confidence":
+                    home_confidence,
+
+                "home_n_valid_nights":
+                    n_valid_nights,
+
+                "home_n_nights_at_home":
+                    home_nights_won,
+
+                "n_persistent_places":
+                    len(places),
+            }
         )
 
         continue
@@ -847,6 +864,9 @@ for participant_id, participant_raw in raw.groupby(
 
         "home_status":
             "observed",
+
+        "home_reason":
+            None,
 
         "home_confidence":
             home_confidence,
@@ -1059,6 +1079,15 @@ weekly_days = requested.merge(
     ],
     how="left",
 )
+
+
+# Use the same set of valid days for numerator and denominator.
+# Days without an interpretable home-time value must not contribute
+# supported time to the weekly denominator.
+weekly_days.loc[
+    weekly_days["home_duration_ms"].isna(),
+    "supported_duration_ms",
+] = np.nan
 
 
 weekly_home = (
