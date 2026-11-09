@@ -90,12 +90,20 @@ ENHANCED_WEEKLY_OUT = (
 
 MAX_GAP_MS = 60_000
 
-COMPATIBILITY_MULTIPLIER = 2.0
+COMPATIBILITY_MULTIPLIER = 1.0
 
 LOCAL_TIMEZONE = "America/New_York"
 
 NIGHT_START_HOUR = 0
 NIGHT_END_HOUR = 6
+
+# Home inference / observability parameters.
+# Implementation/QC parameters, not universal clinical thresholds.
+HOME_REFERENCE_DAYS = 14
+MIN_VALID_NIGHTS = 5
+MIN_NIGHT_OBSERVED_MS = 2 * 60 * 60 * 1000
+MIN_HOME_CONFIDENCE = 0.50
+MIN_DAILY_SUPPORTED_MS = 6 * 60 * 60 * 1000
 
 
 # ============================================================
@@ -486,48 +494,315 @@ for participant_id, participant_raw in raw.groupby(
 
 
     # ========================================================
-    # HOME = PLACE WITH MOST NIGHTTIME OBSERVED DURATION
+    # HOME INFERENCE FROM VALID LOCAL NIGHTS
     # ========================================================
 
-    nighttime = assignments[
-        assignments[
-            "is_nighttime"
-        ]
-        .fillna(False)
-        .astype(bool)
-    ].copy()
+    segment_start_ms = pd.to_numeric(
+        assignments["episode_start_ms"],
+        errors="coerce",
+    ).to_numpy(dtype=float)
 
+    segment_end_ms = pd.to_numeric(
+        assignments["episode_end_ms"],
+        errors="coerce",
+    ).to_numpy(dtype=float)
 
-    if nighttime.empty:
+    segment_place_id = pd.to_numeric(
+        assignments["place_candidate_id"],
+        errors="coerce",
+    ).to_numpy(dtype=float)
+
+    valid_segment = (
+        np.isfinite(segment_start_ms)
+        & np.isfinite(segment_end_ms)
+        & np.isfinite(segment_place_id)
+        & (segment_end_ms > segment_start_ms)
+    )
+
+    segment_start_ms = segment_start_ms[
+        valid_segment
+    ]
+
+    segment_end_ms = segment_end_ms[
+        valid_segment
+    ]
+
+    segment_place_id = (
+        segment_place_id[
+            valid_segment
+        ].astype(int)
+    )
+
+    if len(segment_start_ms) == 0:
 
         print(
-            "No nighttime location evidence."
+            "No valid place intervals for home inference."
         )
 
         continue
 
 
+    # First N local calendar days define the home-reference period.
+
+    first_local_date = (
+        pd.to_datetime(
+            segment_start_ms.min(),
+            unit="ms",
+            utc=True,
+        )
+        .tz_convert(
+            LOCAL_TIMEZONE
+        )
+        .date()
+    )
+
+    reference_dates = [
+        first_local_date
+        + pd.Timedelta(days=i)
+        for i in range(
+            HOME_REFERENCE_DAYS
+        )
+    ]
+
+
+    valid_night_rows = []
+    night_place_duration_rows = []
+
+
+    for local_date in reference_dates:
+
+        night_start = (
+            pd.Timestamp(
+                local_date
+            )
+            .tz_localize(
+                LOCAL_TIMEZONE
+            )
+            + pd.Timedelta(
+                hours=NIGHT_START_HOUR
+            )
+        )
+
+        night_end = (
+            pd.Timestamp(
+                local_date
+            )
+            .tz_localize(
+                LOCAL_TIMEZONE
+            )
+            + pd.Timedelta(
+                hours=NIGHT_END_HOUR
+            )
+        )
+
+        night_start_ms = int(
+            night_start
+            .tz_convert("UTC")
+            .timestamp()
+            * 1000
+        )
+
+        night_end_ms = int(
+            night_end
+            .tz_convert("UTC")
+            .timestamp()
+            * 1000
+        )
+
+
+        # Exact overlap with 00:00-06:00 local time.
+        overlap_ms = np.maximum(
+            0.0,
+            np.minimum(
+                segment_end_ms,
+                night_end_ms,
+            )
+            - np.maximum(
+                segment_start_ms,
+                night_start_ms,
+            ),
+        )
+
+        observed_night_ms = float(
+            overlap_ms.sum()
+        )
+
+        if (
+            observed_night_ms
+            < MIN_NIGHT_OBSERVED_MS
+        ):
+
+            continue
+
+
+        night_place = pd.DataFrame(
+            {
+                "place_candidate_id":
+                    segment_place_id,
+
+                "night_overlap_ms":
+                    overlap_ms,
+            }
+        )
+
+        night_place = (
+            night_place[
+                night_place[
+                    "night_overlap_ms"
+                ] > 0
+            ]
+            .groupby(
+                "place_candidate_id",
+                as_index=False,
+            )[
+                "night_overlap_ms"
+            ]
+            .sum()
+            .sort_values(
+                [
+                    "night_overlap_ms",
+                    "place_candidate_id",
+                ],
+                ascending=[
+                    False,
+                    True,
+                ],
+            )
+        )
+
+
+        if night_place.empty:
+
+            continue
+
+
+        winner_place_id = int(
+            night_place.iloc[0][
+                "place_candidate_id"
+            ]
+        )
+
+        valid_night_rows.append(
+            {
+                "local_date":
+                    str(local_date),
+
+                "observed_night_ms":
+                    observed_night_ms,
+
+                "winner_place_candidate_id":
+                    winner_place_id,
+            }
+        )
+
+        night_place[
+            "local_date"
+        ] = str(local_date)
+
+        night_place_duration_rows.append(
+            night_place
+        )
+
+
+    n_valid_nights = len(
+        valid_night_rows
+    )
+
+
+    if (
+        n_valid_nights
+        < MIN_VALID_NIGHTS
+    ):
+
+        print(
+            "Insufficient nighttime evidence:",
+            n_valid_nights,
+            "valid nights",
+        )
+
+        continue
+
+
+    night_winners = pd.DataFrame(
+        valid_night_rows
+    )
+
+    winner_counts = (
+        night_winners.groupby(
+            "winner_place_candidate_id"
+        )
+        .size()
+        .reset_index(
+            name="n_nights_won"
+        )
+        .sort_values(
+            [
+                "n_nights_won",
+                "winner_place_candidate_id",
+            ],
+            ascending=[
+                False,
+                True,
+            ],
+        )
+    )
+
+
+    home_place_id = int(
+        winner_counts.iloc[0][
+            "winner_place_candidate_id"
+        ]
+    )
+
+    home_nights_won = int(
+        winner_counts.iloc[0][
+            "n_nights_won"
+        ]
+    )
+
+    home_confidence = (
+        home_nights_won
+        / n_valid_nights
+    )
+
+
+    if (
+        home_confidence
+        < MIN_HOME_CONFIDENCE
+    ):
+
+        print(
+            "Inconsistent nighttime home evidence:",
+            f"confidence={home_confidence:.3f}",
+        )
+
+        continue
+
+
+    all_night_place = pd.concat(
+        night_place_duration_rows,
+        ignore_index=True,
+    )
+
     night_by_place = (
-        nighttime.groupby(
+        all_night_place.groupby(
             "place_candidate_id",
             as_index=False,
         )[
-            "duration_ms"
+            "night_overlap_ms"
         ]
         .sum()
+        .rename(
+            columns={
+                "night_overlap_ms":
+                    "duration_ms"
+            }
+        )
         .sort_values(
             "duration_ms",
             ascending=False,
         )
     )
-
-
-    home_place_id = (
-        night_by_place.iloc[0][
-            "place_candidate_id"
-        ]
-    )
-
 
     total_night_duration = float(
         night_by_place[
@@ -536,9 +811,14 @@ for participant_id, participant_raw in raw.groupby(
     )
 
     home_night_duration = float(
-        night_by_place.iloc[0][
-            "duration_ms"
-        ]
+        night_by_place.loc[
+            night_by_place[
+                "place_candidate_id"
+            ].eq(
+                home_place_id
+            ),
+            "duration_ms",
+        ].sum()
     )
 
     home_night_fraction = (
@@ -564,6 +844,18 @@ for participant_id, participant_raw in raw.groupby(
 
         "home_place_candidate_id":
             home_place_id,
+
+        "home_status":
+            "observed",
+
+        "home_confidence":
+            home_confidence,
+
+        "home_n_valid_nights":
+            n_valid_nights,
+
+        "home_n_nights_at_home":
+            home_nights_won,
 
         "nighttime_observed_duration_ms":
             total_night_duration,
@@ -632,7 +924,7 @@ for participant_id, participant_raw in raw.groupby(
         ].copy()
 
 
-        home_duration_ms = float(
+        raw_home_duration_ms = float(
             pd.to_numeric(
                 day_assignments.loc[
                     day_assignments[
@@ -651,8 +943,14 @@ for participant_id, participant_raw in raw.groupby(
 
         if (
             supported_duration_ms
-            > 0
+            >= MIN_DAILY_SUPPORTED_MS
         ):
+
+            home_time_status = "observed"
+
+            home_duration_ms = (
+                raw_home_duration_ms
+            )
 
             home_fraction = (
                 home_duration_ms
@@ -660,6 +958,12 @@ for participant_id, participant_raw in raw.groupby(
             )
 
         else:
+
+            home_time_status = (
+                "insufficient_observability"
+            )
+
+            home_duration_ms = np.nan
 
             home_fraction = np.nan
 
@@ -677,6 +981,12 @@ for participant_id, participant_raw in raw.groupby(
 
                 "supported_duration_ms":
                     supported_duration_ms,
+
+                "home_time_status":
+                    home_time_status,
+
+                "raw_home_duration_ms":
+                    raw_home_duration_ms,
 
                 "home_duration_ms":
                     home_duration_ms,
