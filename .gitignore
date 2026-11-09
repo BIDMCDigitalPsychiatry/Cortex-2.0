@@ -54,3 +54,14 @@ gps_intermediate_*.out
 gps_intermediate_*.err
 gps_reliability_holdout_*.out
 gps_reliability_holdout_*.err
+
+# Local analysis outputs
+*.log
+*.out
+*.err
+*.png
+*.pdf
+
+# Local Cortex analysis artifacts
+home_derivation_*/
+workflows/_gps_clinical_checkpoint_shim/

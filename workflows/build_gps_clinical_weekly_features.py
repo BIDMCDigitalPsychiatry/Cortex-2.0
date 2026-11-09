@@ -365,10 +365,10 @@ for participant_id in sorted(
             .copy()
         )
 
-        supported_duration_ms = float(
-            supported[
-                "duration_ms"
-            ].sum()
+        supported_duration_ms = (
+            float(supported["duration_ms"].sum())
+            if "duration_ms" in supported.columns
+            else 0.0
         )
 
         window_duration_ms = float(
@@ -687,34 +687,40 @@ for participant_id in sorted(
                         ],
 
                     "supported_displacement_distance_m":
-                        meta[
-                            "supported_displacement_distance_m"
-                        ],
+                        meta.get(
+                            "supported_displacement_distance_m",
+                            np.nan,
+                        ),
 
                     "supported_radius_of_gyration_m":
-                        meta[
-                            "supported_radius_of_gyration_m"
-                        ],
+                        meta.get(
+                            "supported_radius_of_gyration_m",
+                            np.nan,
+                        ),
 
                     "displacement_edge_count":
-                        meta[
-                            "displacement_edge_count"
-                        ],
+                        meta.get(
+                            "displacement_edge_count",
+                            np.nan,
+                        ),
 
                     "implausible_transition_count":
-                        meta[
-                            "implausible_transition_count"
-                        ],
+                        meta.get(
+                            "implausible_transition_count",
+                            0,
+                        ),
 
                     "implausible_transition_fraction":
-                        meta[
-                            "implausible_transition_fraction"
-                        ],
+                        meta.get(
+                            "implausible_transition_fraction",
+                            np.nan,
+                        ),
 
                     "spatially_supported_duration_ms":
-                        meta[
-                            "spatially_supported_duration_ms"
-                        ],
+                        meta.get(
+                            "spatially_supported_duration_ms",
+                            np.nan,
+                        ),
                 }
             )
 

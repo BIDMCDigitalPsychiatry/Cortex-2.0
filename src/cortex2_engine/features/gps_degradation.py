@@ -253,3 +253,131 @@ def apply_missing_bin_mask_to_points(
             drop=True
         )
     )
+
+
+def downsample_points_to_time_bins(
+    points: pd.DataFrame,
+    *,
+    window_start_ms: int,
+    window_end_ms: int,
+    bin_size_ms: int,
+    seed: int = 0,
+) -> pd.DataFrame:
+    """
+    Downsample raw GPS observations to at most one observed point per
+    temporal bin.
+
+    This is a temporal-resolution experiment, not a Cortex 2.0 quality
+    threshold or missingness simulation.
+
+    For each non-empty time bin, one observed GPS row is selected
+    uniformly at random. Selection is reproducible for a fixed seed.
+
+    Empty bins remain empty; no interpolation or synthetic GPS values
+    are created.
+
+    Parameters
+    ----------
+    points
+        Raw GPS observations containing a ``timestamp`` column in
+        milliseconds.
+
+    window_start_ms
+        Inclusive start of the analysis window.
+
+    window_end_ms
+        Exclusive end of the analysis window.
+
+    bin_size_ms
+        Temporal sampling interval in milliseconds.
+
+    seed
+        Random seed controlling which observed row is retained inside
+        each non-empty bin.
+
+    Returns
+    -------
+    pd.DataFrame
+        Subset of the original rows, ordered by timestamp, containing
+        at most one observation per temporal bin.
+    """
+
+    window_start_ms = int(window_start_ms)
+    window_end_ms = int(window_end_ms)
+    bin_size_ms = int(bin_size_ms)
+
+    if window_end_ms <= window_start_ms:
+        raise ValueError(
+            "window_end_ms must be greater than window_start_ms"
+        )
+
+    if bin_size_ms <= 0:
+        raise ValueError(
+            "bin_size_ms must be > 0"
+        )
+
+    if "timestamp" not in points.columns:
+        raise ValueError(
+            "points must contain timestamp"
+        )
+
+    if points.empty:
+        return points.copy()
+
+    work = points.copy()
+
+    work["_timestamp_numeric"] = pd.to_numeric(
+        work["timestamp"],
+        errors="coerce",
+    )
+
+    work = work.loc[
+        work["_timestamp_numeric"].notna()
+        & (
+            work["_timestamp_numeric"]
+            >= window_start_ms
+        )
+        & (
+            work["_timestamp_numeric"]
+            < window_end_ms
+        )
+    ].copy()
+
+    if work.empty:
+        return points.iloc[0:0].copy()
+
+    work["_time_bin"] = (
+        (
+            work["_timestamp_numeric"].astype(np.int64)
+            - window_start_ms
+        )
+        // bin_size_ms
+    )
+
+    rng = np.random.default_rng(int(seed))
+
+    selected_indices = []
+
+    for _, group in work.groupby(
+        "_time_bin",
+        sort=True,
+    ):
+        positions = group.index.to_numpy()
+
+        selected_indices.append(
+            rng.choice(positions)
+        )
+
+    result = (
+        work.loc[selected_indices]
+        .sort_values("_timestamp_numeric")
+        .drop(
+            columns=[
+                "_timestamp_numeric",
+                "_time_bin",
+            ]
+        )
+    )
+
+    return result.reset_index(drop=True)
+
