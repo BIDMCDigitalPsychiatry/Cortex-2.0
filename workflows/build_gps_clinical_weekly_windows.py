@@ -75,33 +75,106 @@ HOLDOUT = {
     "EAB653","MSI522","AVO733","PPH714",
 }
 
-COHORT = CALIBRATION | HOLDOUT
+# Full Digital Clinic GPS cohort.
+#
+# Retain every mapped participant represented in the raw GPS source
+# inventory. Participants without qualifying clinical assessments will
+# naturally drop out later when the assessment table is constructed.
 
+GPS_INVENTORY_PATH = Path(
+    "/shared/Digital Clinic/raphe_outputs/"
+    "digital_clinic/inventory/source_files/gps.parquet"
+)
 
 mapping = pd.read_csv(
     MAP_PATH
 )
 
+gps_inventory = pd.read_parquet(
+    GPS_INVENTORY_PATH,
+    columns=[
+        "source_participant_id",
+        "scan_status",
+    ],
+)
+
+gps_sources = set(
+    gps_inventory.loc[
+        gps_inventory["scan_status"].eq("ok"),
+        "source_participant_id",
+    ]
+    .dropna()
+    .astype(str)
+    .unique()
+)
+
+mapping["source_participant_id"] = (
+    mapping["source_participant_id"]
+    .astype(str)
+)
+
 mapping = mapping[
-    mapping["participant_id"].isin(
-        COHORT
+    mapping["source_participant_id"].isin(
+        gps_sources
     )
 ].copy()
 
-if len(mapping) != 32:
-    raise RuntimeError(
-        f"Expected mappings for 32 participants, "
-        f"found {len(mapping)}."
+# A source participant must represent one analytical participant.
+# The participant map currently contains one duplicated MindLAMP source:
+# U7886257943 -> GSH181 and GSH788.
+#
+# Keep one deterministic alias so the same GPS and clinical data are not
+# counted twice. Preserve the duplicate information in the console output.
+duplicate_sources = (
+    mapping.groupby("source_participant_id")["participant_id"]
+    .nunique()
+)
+
+duplicate_sources = duplicate_sources[
+    duplicate_sources > 1
+]
+
+if len(duplicate_sources):
+    print(
+        "Duplicate source participant mappings detected:"
     )
 
-mapping["cohort"] = (
-    mapping["participant_id"]
-    .apply(
-        lambda x:
-        "calibration"
-        if x in CALIBRATION
-        else "holdout"
+    for source_id in duplicate_sources.index:
+        aliases = sorted(
+            mapping.loc[
+                mapping["source_participant_id"].eq(source_id),
+                "participant_id",
+            ]
+            .astype(str)
+            .unique()
+        )
+
+        print(
+            f"  {source_id}: {aliases} "
+            f"-> retaining {aliases[0]}"
+        )
+
+mapping = (
+    mapping.sort_values(
+        [
+            "source_participant_id",
+            "participant_id",
+        ]
     )
+    .drop_duplicates(
+        subset=[
+            "source_participant_id",
+        ],
+        keep="first",
+    )
+    .copy()
+)
+
+mapping["cohort"] = "full_gps_clinical"
+
+print(
+    "Mapped participants with raw GPS:",
+    mapping["participant_id"].nunique(),
 )
 
 
