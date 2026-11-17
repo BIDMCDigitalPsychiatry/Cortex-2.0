@@ -118,7 +118,9 @@ def observed_trip_templates(
         end = getattr(trip, end_col)
 
         subset = f.loc[f.timestamp.between(start, end)].copy()
-        if len(subset) >= min_fixes:
+        if (len(subset) >= min_fixes
+                and ("imputed" not in subset or not subset["imputed"].any())
+                and np.diff(subset.timestamp.to_numpy()).max(initial=0) <= 60_000):
             donors.append(subset.reset_index(drop=True))
 
     return donors
@@ -179,8 +181,36 @@ def _bridge(left, right, donor, cfg):
     )
     ye = EARTH_RADIUS_M * np.deg2rad(right.latitude - lat0)
 
-    x = x + tau * (xe - x[-1])
-    y = y + tau * (ye - y[-1])
+    # Rotate and uniformly scale the donor's displacement to the target
+    # endpoint. This preserves the donor's relative turning geometry instead
+    # of imposing a large artificial linear correction on an opposite trip.
+    donor_endpoint = np.array([x[-1], y[-1]], dtype=float)
+    target_endpoint = np.array([xe, ye], dtype=float)
+    donor_norm = float(np.linalg.norm(donor_endpoint))
+    target_norm = float(np.linalg.norm(target_endpoint))
+    # Near-zero endpoint displacement does NOT imply a stationary path:
+    # a round trip can start and finish at the same place. Preserve the
+    # donor's loop geometry, adding only a small linear endpoint adjustment.
+    close_threshold = max(1.0, float(left.accuracy + right.accuracy))
+    if target_norm <= close_threshold:
+        if donor_norm <= close_threshold:
+            x = x + tau * (xe - x[-1])
+            y = y + tau * (ye - y[-1])
+        else:
+            # A one-way donor can't be stretched to zero displacement
+            # without destroying its geometry; reject instead.
+            return None
+    elif donor_norm <= 1e-6:
+        return None
+    else:
+        angle = np.arctan2(target_endpoint[1], target_endpoint[0]) - np.arctan2(donor_endpoint[1], donor_endpoint[0])
+        scale = target_norm / donor_norm
+        if not np.isfinite(scale) or scale > 4.0:
+            return None
+        cc, ss = np.cos(angle), np.sin(angle)
+        xx = scale * (cc * x - ss * y)
+        yy = scale * (ss * x + cc * y)
+        x, y = xx, yy
 
     lat = lat0 + np.rad2deg(y / EARTH_RADIUS_M)
     lon = lon0 + np.rad2deg(x / (EARTH_RADIUS_M * coslat))
@@ -246,11 +276,28 @@ def impute_timelines(
     donors,
     config=None,
     stay_donors=None,
+    window_start_ms=None,
+    window_end_ms=None,
 ):
     """Generate M timelines and an auditable gap-disposition table."""
     cfg = config or ImputationConfig()
     f = _require_fixes(fixes)
+    if "imputed" in f.columns and f.imputed.any():
+        raise ValueError("Observed source fixes must not contain imputed points")
     gaps = find_long_gaps(f, cfg.max_supported_gap_ms)
+    if (window_start_ms is None) != (window_end_ms is None):
+        raise ValueError("Both window boundaries must be supplied together")
+    boundary_gaps = []
+    if window_start_ms is not None:
+        if window_end_ms <= window_start_ms:
+            raise ValueError("Invalid window boundaries")
+        if f.empty:
+            boundary_gaps = [(int(window_start_ms), int(window_end_ms))]
+        else:
+            if int(f.timestamp.iloc[0]) > int(window_start_ms):
+                boundary_gaps.append((int(window_start_ms), int(f.timestamp.iloc[0])))
+            if int(f.timestamp.iloc[-1]) < int(window_end_ms):
+                boundary_gaps.append((int(f.timestamp.iloc[-1]), int(window_end_ms)))
 
     rng = np.random.default_rng(cfg.seed)
     stay_donors = stay_donors or []
@@ -259,52 +306,68 @@ def impute_timelines(
 
     for imp in range(cfg.m):
         pieces = [f.assign(imputed=False)]
+        for lo, hi in boundary_gaps:
+            # No bracketing observation: cannot condition a donor bridge.
+            # Report the entire unobserved boundary span explicitly.
+            diagnostics.append({
+                "imputation": imp, "start_ms": lo, "end_ms": hi,
+                "gap_ms": hi - lo, "imputed": False,
+                "donor_index": pd.NA, "gap_type": "unbounded",
+                "n_candidate_donors": 0,
+            })
 
         for gap in gaps.itertuples(index=False):
             left = f.iloc[gap.left_index]
             right = f.iloc[gap.right_index]
 
-            # Distinguish stationary (accuracy-compatible) gaps from trips.
-            # If stationary, use only the participant's observed stay donors.
+            # Close endpoints can hide a round-trip excursion. Never force
+            # all such gaps to be stationary: eligible trip AND stay templates
+            # compete, with donor identity sampled uniformly (provisional).
             stay_possible = gap.endpoint_distance_m <= (
                 (float(left.accuracy) + float(right.accuracy))
                 * cfg.stay_compatibility_multiplier
             )
-            donor_set = stay_donors if stay_possible else donors
-            candidates = []
-            for j, donor in enumerate(donor_set):
-                d = _require_fixes(donor)
-                if len(d) < cfg.min_donor_fixes:
-                    continue
-
-                duration = d.timestamp.iloc[-1] - d.timestamp.iloc[0]
-                if duration <= 0:
-                    continue
-
-                ratio = gap.gap_ms / duration
-                if not (
-                    1 / cfg.maximum_time_stretch
-                    <= ratio <= cfg.maximum_time_stretch
-                ):
-                    continue
-
-                distance = _haversine(
-                    d.latitude.iloc[0], d.longitude.iloc[0],
-                    d.latitude.iloc[-1], d.longitude.iloc[-1],
-                )
-
-                if abs(distance - gap.endpoint_distance_m) <= (
-                    cfg.endpoint_distance_tolerance_m
-                ):
-                    candidates.append(j)
+            candidate_pairs = []
+            for kind, donor_set in (
+                ("trip", donors),
+                ("stay", stay_donors if stay_possible else []),
+            ):
+                for j, donor in enumerate(donor_set):
+                    d = _require_fixes(donor)
+                    if len(d) < cfg.min_donor_fixes:
+                        continue
+                    if ("imputed" in d and d["imputed"].any()) or (
+                        np.diff(d.timestamp.to_numpy()).max(initial=0)
+                        > cfg.max_supported_gap_ms
+                    ):
+                        continue
+                    duration = d.timestamp.iloc[-1] - d.timestamp.iloc[0]
+                    if duration <= 0:
+                        continue
+                    ratio = gap.gap_ms / duration
+                    if not (1 / cfg.maximum_time_stretch <= ratio
+                            <= cfg.maximum_time_stretch):
+                        continue
+                    distance = _haversine(
+                        d.latitude.iloc[0], d.longitude.iloc[0],
+                        d.latitude.iloc[-1], d.longitude.iloc[-1])
+                    if abs(distance - gap.endpoint_distance_m) <= (
+                        cfg.endpoint_distance_tolerance_m
+                    ):
+                        candidate_pairs.append((kind, j, donor))
 
             piece = None
             chosen = None
-
-            if candidates:
-                chosen = int(rng.choice(candidates))
-                piece = _bridge(left, right, donor_set[chosen], cfg)
-
+            kind = "unresolved"
+            if candidate_pairs:
+                for candidate_idx in rng.permutation(len(candidate_pairs)):
+                    candidate_kind, candidate_index, donor = candidate_pairs[int(candidate_idx)]
+                    candidate_piece = _bridge(left, right, donor, cfg)
+                    if candidate_piece is not None:
+                        kind = candidate_kind
+                        chosen = candidate_index
+                        piece = candidate_piece
+                        break
             if piece is not None:
                 pieces.append(piece)
 
@@ -315,7 +378,8 @@ def impute_timelines(
                 "gap_ms": gap.gap_ms,
                 "imputed": piece is not None,
                 "donor_index": chosen if piece is not None else pd.NA,
-                "gap_type": "stay" if stay_possible else "trip",
+                "gap_type": kind,
+                "n_candidate_donors": len(candidate_pairs),
             })
 
         completed = (

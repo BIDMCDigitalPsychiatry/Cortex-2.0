@@ -17,7 +17,7 @@ raw GPS
 
 Important:
 - MAX_GAP_MS = 60 seconds
-- compatibility_multiplier = 2.0
+- compatibility_multiplier = 1.0
 - place candidates are built independently inside each clinical window
   to avoid using future GPS information.
 """
@@ -58,6 +58,9 @@ from cortex2_engine.features.gps_trajectory_plausibility import (
 
 
 
+from cortex2_engine.features.gps_trip_daily_allocation import allocate_trips_to_days
+from cortex2_engine.features.gps_pipeline_qc import GPSQCConfig, clean_gps_fixes
+
 from cortex2_engine.features.gps_trip_features import (
     build_place_visits,
     build_observed_trips,
@@ -69,7 +72,7 @@ MIN_ENDPOINT_DWELL_MS = 600_000
 TRIP_ACCELERATION_NOISE = 1.0
 
 MAX_GAP_MS = 60_000
-COMPATIBILITY_MULTIPLIER = 2.0
+COMPATIBILITY_MULTIPLIER = 1.0
 
 
 DC = Path("/shared/Digital Clinic")
@@ -352,6 +355,10 @@ for participant_id in sorted(
 
             continue
 
+        # Shared accuracy/deduplication QC before interval construction.
+        day_raw = clean_gps_fixes(day_raw, GPSQCConfig(
+            max_gap_ms=MAX_GAP_MS, max_accuracy_m=None))
+
         intervals = (
             build_gps_intervals(
                 day_raw[
@@ -617,58 +624,12 @@ for participant_id in sorted(
                     ),
                 )
 
-                departure = pd.to_datetime(
-                    trips["trip_start_ms"],
-                    unit="ms",
-                    utc=True,
-                ).dt.tz_convert("America/New_York")
-
-                arrival = pd.to_datetime(
-                    trips["trip_end_ms"],
-                    unit="ms",
-                    utc=True,
-                ).dt.tz_convert("America/New_York")
-
-                trips["departure_date"] = (
-                    departure.dt.strftime("%Y-%m-%d")
-                )
-                trips["arrival_date"] = (
-                    arrival.dt.strftime("%Y-%m-%d")
-                )
-
-                # Cross-date trips remain identifiable.
-                # Do not assign their entire distance to one day.
-                trips["cross_date"] = (
-                    trips["departure_date"]
-                    != trips["arrival_date"]
-                )
-
-                same_day = trips.loc[
-                    ~trips["cross_date"]
-                ]
-
-                for trip_date, group in same_day.groupby(
-                    "departure_date"
-                ):
-                    trip_daily[trip_date] = {
-                        "trip_count_obs": int(len(group)),
-                        "trip_path_length_obs_m": (
-                            group["path_distance_smooth_obs_m"]
-                            .sum(min_count=1)
-                        ),
-                        "trip_path_raw_obs_m": (
-                            group["path_distance_raw_obs_m"]
-                            .sum(min_count=1)
-                        ),
-                        "trip_displacement_obs_m": (
-                            group["endpoint_displacement_obs_m"]
-                            .sum(min_count=1)
-                        ),
-                        "trip_smoothing_coverage": (
-                            group["smoothing_coverage_fraction"]
-                            .mean()
-                        ),
-                    }
+                # Allocate cross-midnight trips rather than dropping them.
+                # Daily length is a time-proportional proxy; weekly totals
+                # preserve the whole-trip estimates.
+                allocated = allocate_trips_to_days(trips, edges=window_edges)
+                for item in allocated.to_dict("records"):
+                    trip_daily[item.pop("date")] = item
 
         n_window_places = (
             len(places)
@@ -845,12 +806,23 @@ for participant_id in sorted(
 
                 result.update({
                     "trip_count_obs": (
-                        0 if has_support else np.nan
+                        0 if has_support and not assignments.empty and not places.empty else np.nan
                     ),
-                    "trip_path_length_obs_m": np.nan,
-                    "trip_path_raw_obs_m": np.nan,
-                    "trip_displacement_obs_m": np.nan,
+                    "trip_path_length_obs_m": (
+                        0.0 if has_support and not assignments.empty and not places.empty else np.nan
+                    ),
+                    "trip_path_raw_obs_m": (
+                        0.0 if has_support and not assignments.empty and not places.empty else np.nan
+                    ),
+                    "trip_displacement_obs_m": (
+                        0.0 if has_support and not assignments.empty and not places.empty else np.nan
+                    ),
+                    "trip_endpoint_displacement_obs_m": (
+                        0.0 if has_support and not assignments.empty and not places.empty else np.nan
+                    ),
                     "trip_smoothing_coverage": np.nan,
+                    "trip_allocation_proxy_method": "no_trips",
+                    "cross_midnight_trip": False,
                 })
 
             daily_feature_rows.append(
