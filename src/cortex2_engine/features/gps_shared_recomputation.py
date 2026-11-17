@@ -19,6 +19,7 @@ from cortex2_engine.features.gps_gap_imputation import (
     ImputationConfig, impute_timelines, find_long_gaps,
 )
 from cortex2_engine.features.gps_home_shared import HomeConfig, calculate_home_time
+from cortex2_engine.features.gps_pipeline_qc import GPSQCConfig, clean_gps_fixes
 
 
 def annotate_interval_provenance(edges, fixes):
@@ -65,12 +66,15 @@ def recompute_timeline(fixes, *, start_ms, end_ms, max_gap_ms=60_000,
                        compatibility_multiplier=1.0,
                        min_endpoint_dwell_ms=600_000,
                        acceleration_noise_density_m_s1p5=1.0,
-                       home_config=None):
+                       home_config=None, qc_config=None):
     """Recompute mobility in one window using the same Cortex place substrate.
 
     For home inference, fixes must span enough reference nights; otherwise
     home_time_ms remains missing. Never infer home from a single day's mode.
     """
+    # Shared QC is applied to both observed and completed timelines.
+    qc = qc_config or GPSQCConfig(max_gap_ms=max_gap_ms)
+    fixes = clean_gps_fixes(fixes, qc)
     edges = build_gps_intervals(
         fixes, window_start_ms=int(start_ms), window_end_ms=int(end_ms),
         max_gap_ms=int(max_gap_ms),
@@ -78,14 +82,21 @@ def recompute_timeline(fixes, *, start_ms, end_ms, max_gap_ms=60_000,
     edges = annotate_interval_provenance(edges, fixes)
     results = {
         "trip_count": np.nan, "path_length_m": np.nan,
-        "displacement_m": np.nan, "raw_path_length_m": np.nan,
+        "displacement_m": np.nan, "endpoint_displacement_m": np.nan,
+        "raw_path_length_m": np.nan,
         "home_time_ms": np.nan, "home_status": "insufficient_observability",
         "supported_duration_ms": 0.0, "observed_supported_duration_ms": 0.0,
         "imputed_supported_duration_ms": 0.0,
     }
     if edges.empty:
         return results
-    good = edges.supported.fillna(False).astype(bool)
+    spatial_all = add_gps_spatial_semantics(edges.copy())
+    trajectory = add_gps_trajectory_plausibility(
+        spatial_all, max_plausible_speed_kmh=qc.max_speed_kmh)
+    good = (trajectory.supported.fillna(False).astype(bool)
+            & ~trajectory.trajectory_status.eq("implausible_speed"))
+    # Do not confuse GPS time support with physically plausible edges.
+    # Keep the same valid mask for observed and imputed branches.
     results["observed_supported_duration_ms"] = float(
         edges.loc[good & ~edges.involves_imputation, "duration_ms"].sum())
     results["imputed_supported_duration_ms"] = float(
@@ -95,10 +106,8 @@ def recompute_timeline(fixes, *, start_ms, end_ms, max_gap_ms=60_000,
         results["imputed_supported_duration_ms"])
     if not good.any():
         return results
-    spatial_all = add_gps_spatial_semantics(edges.copy())
-    trajectory = add_gps_trajectory_plausibility(
-        spatial_all, max_plausible_speed_kmh=1000.0)
-    # Location microsegments use only temporally supported edges.
+    # Location microsegments use only temporally supported and
+    # trajectory-plausible edges.
     episodes = build_anchor_compatible_location_episodes(
         spatial_all.loc[good].copy())
     if episodes.empty:
@@ -118,7 +127,8 @@ def recompute_timeline(fixes, *, start_ms, end_ms, max_gap_ms=60_000,
             acceleration_noise_density_m_s1p5=acceleration_noise_density_m_s1p5)
         for out, col in (
             ("path_length_m", "path_distance_smooth_obs_m"),
-            ("displacement_m", "endpoint_displacement_obs_m"),
+            ("displacement_m", "place_displacement_obs_m"),
+            ("endpoint_displacement_m", "endpoint_displacement_obs_m"),
             ("raw_path_length_m", "path_distance_raw_obs_m"),
         ):
             if col not in trips.columns:
@@ -126,7 +136,8 @@ def recompute_timeline(fixes, *, start_ms, end_ms, max_gap_ms=60_000,
             results[out] = float(trips[col].sum(min_count=1))
     else:
         # No trips can be a valid zero; avoid zero on unsupported windows.
-        results.update(path_length_m=0.0, displacement_m=0.0, raw_path_length_m=0.0)
+        results.update(path_length_m=0.0, displacement_m=0.0,
+                       endpoint_displacement_m=0.0, raw_path_length_m=0.0)
     home = calculate_home_time(
         assignments, supported_duration_ms=results["supported_duration_ms"],
         start_ms=start_ms, end_ms=end_ms, config=home_config or HomeConfig())
@@ -134,18 +145,31 @@ def recompute_timeline(fixes, *, start_ms, end_ms, max_gap_ms=60_000,
     return results
 
 
-def audit_completed_timeline(timeline, max_gap_ms=60_000):
+def audit_completed_timeline(timeline, max_gap_ms=60_000, *,
+                             start_ms=None, end_ms=None):
     gaps = find_long_gaps(timeline, max_gap_ms)
+    spans = gaps.gap_ms.tolist()
+    if start_ms is not None and end_ms is not None:
+        ts = pd.to_numeric(timeline.timestamp, errors="coerce").dropna()
+        if ts.empty:
+            spans.append(int(end_ms) - int(start_ms))
+        else:
+            spans.extend([
+                max(0, int(ts.min()) - int(start_ms)),
+                max(0, int(end_ms) - int(ts.max())),
+            ])
+    spans = [int(v) for v in spans if v > 0]
     return {
-        "temporally_complete": bool(len(timeline) >= 2 and gaps.empty),
-        "n_remaining_gaps": len(gaps),
-        "max_remaining_gap_ms": float(gaps.gap_ms.max()) if len(gaps) else 0.0,
+        "temporally_complete": bool(len(timeline) >= 2 and not spans),
+        "n_remaining_gaps": len(spans),
+        "max_remaining_gap_ms": float(max(spans)) if spans else 0.0,
+        "unresolved_duration_ms": float(sum(spans)),
     }
 
 
 def pool_completed_mobility_features(estimates, completion):
     """Summarize the M complete timelines. No confidence-interval claim."""
-    names = ("trip_count", "path_length_m", "displacement_m", "raw_path_length_m", "home_time_ms")
+    names = ("trip_count", "path_length_m", "displacement_m", "endpoint_displacement_m", "raw_path_length_m", "home_time_ms")
     if estimates.empty or completion.empty or len(estimates) != len(completion):
         raise ValueError("Empty or misaligned imputation results")
     if not estimates.imputation.equals(completion.imputation):
@@ -153,15 +177,17 @@ def pool_completed_mobility_features(estimates, completion):
     complete = bool(completion.temporally_complete.fillna(False).all())
     rows = []
     for name in names:
-        values = pd.to_numeric(estimates[name], errors="coerce").to_numpy(float)
-        valid = complete and np.isfinite(values).all()
+        values = (pd.to_numeric(estimates[name], errors="coerce").to_numpy(float)
+                  if name in estimates else np.full(len(estimates), np.nan))
+        valid = np.isfinite(values).all()
         rows.append({
             "feature": name,
             "estimate": float(values.mean()) if valid else np.nan,
             "lower95": float(np.quantile(values, 0.025)) if valid else np.nan,
             "upper95": float(np.quantile(values, 0.975)) if valid else np.nan,
-            "interval_type": ("descriptive_imputation_range_not_CI" if valid
-                              else "incomplete_or_missing"),
+            "interval_type": (("descriptive_imputation_range_not_CI" if complete
+                               else "partial_support_descriptive_not_CI")
+                              if valid else "missing_feature"),
             "n_imputations": int(np.isfinite(values).sum()),
         })
     return pd.DataFrame(rows)
@@ -171,13 +197,22 @@ def recompute_multiple_timelines(fixes, donors, *, start_ms, end_ms,
                                  stay_donors=None,
                                  imputation_config=None, **kwargs):
     cfg = imputation_config or ImputationConfig()
+    # Clean ONCE. Both observed and imputed branches receive identical
+    # observed fixes; differences are due to imputation, not filtering.
+    qc_config = kwargs.pop("qc_config", None) or GPSQCConfig(max_gap_ms=cfg.max_supported_gap_ms)
     observed = fixes.loc[~fixes.imputed.fillna(False).astype(bool)].copy() if "imputed" in fixes else fixes.copy()
+    observed = clean_gps_fixes(observed, qc_config)
+    kwargs["qc_config"] = qc_config
     observed_features = recompute_timeline(
         observed, start_ms=start_ms, end_ms=end_ms, max_gap_ms=cfg.max_supported_gap_ms, **kwargs)
-    timelines, diagnostics = impute_timelines(observed, donors, config=cfg, stay_donors=stay_donors)
+    timelines, diagnostics = impute_timelines(
+        observed, donors, config=cfg, stay_donors=stay_donors,
+        window_start_ms=start_ms, window_end_ms=end_ms)
     records, checks = [], []
     for i, timeline in enumerate(timelines):
-        check = audit_completed_timeline(timeline, cfg.max_supported_gap_ms)
+        check = audit_completed_timeline(
+            timeline, cfg.max_supported_gap_ms,
+            start_ms=start_ms, end_ms=end_ms)
         checks.append({"imputation": i, **check})
         features = recompute_timeline(
             timeline, start_ms=start_ms, end_ms=end_ms,
@@ -188,11 +223,20 @@ def recompute_multiple_timelines(fixes, donors, *, start_ms, end_ms,
     pooled = pool_completed_mobility_features(estimates, completion)
     unresolved = int((~diagnostics.imputed.astype(bool)).sum()) if len(diagnostics) else 0
     complete = bool(completion.temporally_complete.all()) and unresolved == 0
+    total_gap_ms = float(diagnostics.gap_ms.sum()) if len(diagnostics) else 0.0
+    unresolved_gap_ms = float(diagnostics.loc[~diagnostics.imputed.astype(bool), "gap_ms"].sum()) if len(diagnostics) else 0.0
+    # Do not call partially observed windows complete or treat them as zero movement.
+    pooled["unresolved_gap_duration_fraction"] = (
+        unresolved_gap_ms / total_gap_ms if total_gap_ms else 0.0)
     status = "observed_only" if diagnostics.empty else (
         "candidate_imputation_complete" if complete else "incomplete_imputation")
+    # Report estimates for successfully reconstructed portions, but do not
+    # mislabel them as whole-window estimates when gaps remain unresolved.
+    pooled["whole_window_complete"] = complete
+    pooled["unresolved_gap_attempt_fraction"] = (unresolved / len(diagnostics)) if len(diagnostics) else 0.0
     if not complete:
-        pooled.loc[:, ["estimate", "lower95", "upper95"]] = np.nan
-        pooled["interval_type"] = "incomplete_imputation"
+        pooled["interval_type"] = "partial_support_descriptive_not_CI"
+    # These are descriptive conditional estimates, never calibrated 95% CIs.
     return {
         "observed_features": observed_features,
         "completed_timeline_estimates": estimates,
