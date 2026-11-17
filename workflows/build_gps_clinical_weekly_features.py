@@ -57,6 +57,17 @@ from cortex2_engine.features.gps_trajectory_plausibility import (
 )
 
 
+
+from cortex2_engine.features.gps_trip_features import (
+    build_place_visits,
+    build_observed_trips,
+    add_smoothed_trip_path_distances,
+)
+
+# CORTEX2_OBSERVED_TRIPS_V1
+MIN_ENDPOINT_DWELL_MS = 600_000
+TRIP_ACCELERATION_NOISE = 1.0
+
 MAX_GAP_MS = 60_000
 COMPATIBILITY_MULTIPLIER = 2.0
 
@@ -86,17 +97,17 @@ ASSESSMENT_PATH = (
 
 DAILY_OUT = (
     ROOT
-    / "gps_clinical_weekly_daily_features.parquet"
+    / "gps_clinical_weekly_daily_features_with_trips.parquet"
 )
 
 WEEKLY_OUT = (
     ROOT
-    / "gps_clinical_weekly_features.parquet"
+    / "gps_clinical_weekly_features_with_trips.parquet"
 )
 
 SUMMARY_OUT = (
     ROOT
-    / "gps_clinical_weekly_feature_summary.csv"
+    / "gps_clinical_weekly_feature_summary_with_trips.csv"
 )
 
 
@@ -264,6 +275,7 @@ for participant_id in sorted(
     # These can then be reused in overlapping clinical windows.
     # --------------------------------------------------------
 
+    day_edges = {}
     day_microsegments = {}
     day_metadata = {}
 
@@ -356,6 +368,7 @@ for participant_id in sorted(
             )
         )
 
+        day_edges[date] = intervals.copy()
         supported = (
             intervals[
                 intervals[
@@ -561,6 +574,102 @@ for participant_id in sorted(
 
             places = pd.DataFrame()
 
+
+        trip_daily = {}
+
+        edge_frames = [
+            day_edges[d]
+            for d in window_days["date"].astype(str)
+            if d in day_edges and not day_edges[d].empty
+        ]
+
+        if edge_frames and not assignments.empty and not places.empty:
+            window_edges = pd.concat(
+                edge_frames, ignore_index=True
+            )
+
+            window_edges = add_gps_spatial_semantics(
+                window_edges
+            )
+
+            window_edges = add_gps_trajectory_plausibility(
+                window_edges,
+                max_plausible_speed_kmh=1000.0,
+            )
+
+            visits = build_place_visits(
+                assignments,
+                min_endpoint_dwell_ms=MIN_ENDPOINT_DWELL_MS,
+            )
+
+            trips = build_observed_trips(
+                window_edges,
+                visits,
+                places,
+            )
+
+            if not trips.empty:
+                trips = add_smoothed_trip_path_distances(
+                    window_edges,
+                    trips,
+                    acceleration_noise_density_m_s1p5=(
+                        TRIP_ACCELERATION_NOISE
+                    ),
+                )
+
+                departure = pd.to_datetime(
+                    trips["trip_start_ms"],
+                    unit="ms",
+                    utc=True,
+                ).dt.tz_convert("America/New_York")
+
+                arrival = pd.to_datetime(
+                    trips["trip_end_ms"],
+                    unit="ms",
+                    utc=True,
+                ).dt.tz_convert("America/New_York")
+
+                trips["departure_date"] = (
+                    departure.dt.strftime("%Y-%m-%d")
+                )
+                trips["arrival_date"] = (
+                    arrival.dt.strftime("%Y-%m-%d")
+                )
+
+                # Cross-date trips remain identifiable.
+                # Do not assign their entire distance to one day.
+                trips["cross_date"] = (
+                    trips["departure_date"]
+                    != trips["arrival_date"]
+                )
+
+                same_day = trips.loc[
+                    ~trips["cross_date"]
+                ]
+
+                for trip_date, group in same_day.groupby(
+                    "departure_date"
+                ):
+                    trip_daily[trip_date] = {
+                        "trip_count_obs": int(len(group)),
+                        "trip_path_length_obs_m": (
+                            group["path_distance_smooth_obs_m"]
+                            .sum(min_count=1)
+                        ),
+                        "trip_path_raw_obs_m": (
+                            group["path_distance_raw_obs_m"]
+                            .sum(min_count=1)
+                        ),
+                        "trip_displacement_obs_m": (
+                            group["endpoint_displacement_obs_m"]
+                            .sum(min_count=1)
+                        ),
+                        "trip_smoothing_coverage": (
+                            group["smoothing_coverage_fraction"]
+                            .mean()
+                        ),
+                    }
+
         n_window_places = (
             len(places)
             if places is not None
@@ -724,6 +833,26 @@ for participant_id in sorted(
                 }
             )
 
+
+            trip_values = trip_daily.get(date)
+
+            if trip_values is not None:
+                result.update(trip_values)
+            else:
+                has_support = (
+                    meta["supported_duration_ms"] > 0
+                )
+
+                result.update({
+                    "trip_count_obs": (
+                        0 if has_support else np.nan
+                    ),
+                    "trip_path_length_obs_m": np.nan,
+                    "trip_path_raw_obs_m": np.nan,
+                    "trip_displacement_obs_m": np.nan,
+                    "trip_smoothing_coverage": np.nan,
+                })
+
             daily_feature_rows.append(
                 result
             )
@@ -882,6 +1011,44 @@ weekly = (
     )
 )
 
+
+
+trip_weekly = (
+    daily.groupby("clinical_window_id", as_index=False)
+    .agg(
+        trip_count_obs_weekly=(
+            "trip_count_obs",
+            lambda x: x.sum(min_count=1),
+        ),
+        trip_path_length_obs_weekly_m=(
+            "trip_path_length_obs_m",
+            lambda x: x.sum(min_count=1),
+        ),
+        trip_path_raw_obs_weekly_m=(
+            "trip_path_raw_obs_m",
+            lambda x: x.sum(min_count=1),
+        ),
+        trip_displacement_obs_weekly_m=(
+            "trip_displacement_obs_m",
+            lambda x: x.sum(min_count=1),
+        ),
+        trip_days_with_estimates=(
+            "trip_path_length_obs_m",
+            "count",
+        ),
+        trip_smoothing_coverage_mean=(
+            "trip_smoothing_coverage",
+            "mean",
+        ),
+    )
+)
+
+weekly = weekly.merge(
+    trip_weekly,
+    on="clinical_window_id",
+    how="left",
+    validate="one_to_one",
+)
 
 weekly = weekly.merge(
     assessments[
