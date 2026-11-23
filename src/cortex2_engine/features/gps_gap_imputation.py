@@ -271,6 +271,247 @@ def _bridge(left, right, donor, cfg):
     })
 
 
+
+# CORTEX2_GEOGRAPHIC_ROUTE_V1
+def _matching_route_sections(left, right, trip_donors, cfg):
+    """Find observed route subsections near both gap endpoints."""
+    matches = []
+
+    for donor_index, donor in enumerate(trip_donors):
+        d = _require_fixes(donor)
+        if len(d) < cfg.min_donor_fixes:
+            continue
+        if "imputed" in d and d.imputed.any():
+            continue
+
+        times = d.timestamp.to_numpy(dtype=np.int64)
+        if np.diff(times).max(initial=0) > cfg.max_supported_gap_ms:
+            continue
+
+        lat = d.latitude.to_numpy(dtype=float)
+        lon = d.longitude.to_numpy(dtype=float)
+
+        def distances(anchor):
+            a = np.deg2rad(float(anchor.latitude))
+            b = np.deg2rad(lat)
+            dl = np.deg2rad(lon - float(anchor.longitude))
+            h = (np.sin((b-a)/2)**2
+                 + np.cos(a)*np.cos(b)*np.sin(dl/2)**2)
+            return 2*EARTH_RADIUS_M*np.arcsin(
+                np.sqrt(np.clip(h, 0, 1))
+            )
+
+        ds = distances(left)
+        de = distances(right)
+
+        k = min(8, len(d))
+        starts = np.argpartition(ds, k-1)[:k]
+        ends = np.argpartition(de, k-1)[:k]
+
+        for i in starts:
+            for j in ends:
+                if abs(int(i)-int(j))+1 < cfg.min_donor_fixes:
+                    continue
+
+                a, b = sorted((int(i), int(j)))
+                if times[b]-times[a] < cfg.min_template_span_ms:
+                    continue
+
+                score = float(ds[i]+de[j])
+
+                # Compare endpoint mismatch with gap displacement,
+                # without imposing a donor-duration limit.
+                displacement = float(_haversine(
+                    left.latitude, left.longitude,
+                    right.latitude, right.longitude
+                ))
+                if score >= displacement:
+                    continue
+
+                route = d.iloc[a:b+1].copy().reset_index(drop=True)
+                if i > j:
+                    route = route.iloc[::-1].reset_index(drop=True)
+
+                matches.append((score, donor_index, route))
+
+    matches.sort(key=lambda x: x[0])
+    return matches
+
+
+
+def _bridge_matched_route(left, right, route, cfg):
+    """Adapt geographically matched donor geometry to a missing GPS interval.
+
+    Preserve observed route vertices, including bends, while allocating
+    timestamps according to cumulative distance rather than donor duration.
+    """
+    d = route.copy().reset_index(drop=True)
+
+    if len(d) < cfg.min_donor_fixes:
+        return None
+
+    dt = int(right.timestamp - left.timestamp)
+    if dt <= cfg.max_supported_gap_ms:
+        return None
+
+    lat0 = float(left.latitude)
+    lon0 = float(left.longitude)
+    coslat = np.cos(np.deg2rad(lat0))
+
+    if abs(coslat) < 1e-8:
+        return None
+
+    # Local metric coordinates, relative to the observed gap start.
+    x = (
+        EARTH_RADIUS_M
+        * np.deg2rad(d.longitude.to_numpy(dtype=float) - lon0)
+        * coslat
+    )
+    y = (
+        EARTH_RADIUS_M
+        * np.deg2rad(d.latitude.to_numpy(dtype=float) - lat0)
+    )
+
+    x -= x[0]
+    y -= y[0]
+
+    # Distance-based progress along the original donor geometry.
+    step = np.hypot(np.diff(x), np.diff(y))
+    cumulative = np.r_[0.0, np.cumsum(step)]
+    total_distance = float(cumulative[-1])
+
+    if not np.isfinite(total_distance) or total_distance <= 0:
+        return None
+
+    progress = cumulative / total_distance
+
+    # Remove exact repeated positions, not meaningful route bends.
+    keep = np.r_[True, np.diff(progress) > 1e-12]
+    progress = progress[keep]
+    x = x[keep]
+    y = y[keep]
+    accuracy = d.accuracy.to_numpy(dtype=float)[keep]
+
+    if len(progress) < 2:
+        return None
+
+    # Observed target endpoint in the same coordinate system.
+    xe = (
+        EARTH_RADIUS_M
+        * np.deg2rad(float(right.longitude) - lon0)
+        * coslat
+    )
+    ye = (
+        EARTH_RADIUS_M
+        * np.deg2rad(float(right.latitude) - lat0)
+    )
+
+    # Small, gradual translation to align observed donor endpoints.
+    # No whole-route rotation or scaling.
+    x = x + progress * (xe - x[-1])
+    y = y + progress * (ye - y[-1])
+
+
+    # CORTEX2_COMPACT_GEOGRAPHIC_ROUTE_V1
+    # Simplify by the additional path length lost when removing
+    # each vertex, rather than by spatial distance alone.
+    # This prioritizes preservation of bends and traveled distance.
+    import heapq
+
+    n_original = len(progress)
+    target_vertices = max(3, int(dt // 1000) + 1)
+
+    if n_original > target_vertices:
+        prev = np.arange(n_original, dtype=int) - 1
+        nxt = np.arange(n_original, dtype=int) + 1
+        nxt[-1] = -1
+        alive = np.ones(n_original, dtype=bool)
+        heap = []
+
+        def removal_loss(i):
+            a, b = int(prev[i]), int(nxt[i])
+            if a < 0 or b < 0:
+                return float("inf")
+            before = (
+                np.hypot(x[i]-x[a], y[i]-y[a])
+                + np.hypot(x[b]-x[i], y[b]-y[i])
+            )
+            after = np.hypot(x[b]-x[a], y[b]-y[a])
+            return max(0.0, float(before-after))
+
+        for i in range(1, n_original-1):
+            heapq.heappush(
+                heap, (removal_loss(i), i, int(prev[i]), int(nxt[i]))
+            )
+
+        remaining = n_original
+
+        while remaining > target_vertices and heap:
+            loss, i, a, b = heapq.heappop(heap)
+
+            if not alive[i] or prev[i] != a or nxt[i] != b:
+                continue
+
+            alive[i] = False
+            remaining -= 1
+            nxt[a] = b
+            prev[b] = a
+
+            for j in (a, b):
+                if 0 < j < n_original-1 and alive[j]:
+                    heapq.heappush(
+                        heap,
+                        (removal_loss(j), j, int(prev[j]), int(nxt[j]))
+                    )
+
+        progress = progress[alive]
+        x = x[alive]
+        y = y[alive]
+        accuracy = accuracy[alive]
+
+    # Add support points only when needed to avoid long temporal
+    # gaps. These are interpolated from the retained geometry.
+    regular_intervals = max(2, int(np.ceil(dt / 30000)))
+    support_progress = np.linspace(0, 1, regular_intervals+1)
+    sampling_progress = np.unique(
+        np.r_[progress, support_progress, 0.0, 1.0]
+    )
+
+    timestamps = np.rint(
+        int(left.timestamp) + dt*sampling_progress
+    ).astype(np.int64)
+
+    xx = np.interp(sampling_progress, progress, x)
+    yy = np.interp(sampling_progress, progress, y)
+    aa = np.interp(sampling_progress, progress, accuracy)
+
+    valid = (
+        (timestamps > int(left.timestamp))
+        & (timestamps < int(right.timestamp))
+    )
+
+    out = pd.DataFrame({
+        "timestamp": timestamps[valid],
+        "latitude": lat0 + np.rad2deg(
+            yy[valid] / EARTH_RADIUS_M
+        ),
+        "longitude": lon0 + np.rad2deg(
+            xx[valid] / (EARTH_RADIUS_M*coslat)
+        ),
+        "accuracy": aa[valid],
+        "imputed": True,
+    })
+
+    out = (
+        out.drop_duplicates("timestamp")
+        .sort_values("timestamp")
+        .reset_index(drop=True)
+    )
+
+    return out if not out.empty else None
+
+
+
 def impute_timelines(
     fixes,
     donors,
@@ -359,7 +600,24 @@ def impute_timelines(
             piece = None
             chosen = None
             kind = "unresolved"
-            if candidate_pairs:
+            geographic_error_m = np.nan
+
+            route_matches = _matching_route_sections(
+                left, right, donors, cfg
+            )
+
+            for score, donor_index, route in route_matches:
+                proposed = _bridge_matched_route(
+                    left, right, route, cfg
+                )
+                if proposed is not None:
+                    piece = proposed
+                    chosen = donor_index
+                    kind = "geographic_trip"
+                    geographic_error_m = score
+                    break
+
+            if piece is None and candidate_pairs:
                 for candidate_idx in rng.permutation(len(candidate_pairs)):
                     candidate_kind, candidate_index, donor = candidate_pairs[int(candidate_idx)]
                     candidate_piece = _bridge(left, right, donor, cfg)
@@ -380,6 +638,7 @@ def impute_timelines(
                 "donor_index": chosen if piece is not None else pd.NA,
                 "gap_type": kind,
                 "n_candidate_donors": len(candidate_pairs),
+                "geographic_endpoint_error_m": geographic_error_m,
             })
 
         completed = (
