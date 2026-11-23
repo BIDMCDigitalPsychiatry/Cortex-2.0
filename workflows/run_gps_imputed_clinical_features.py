@@ -66,6 +66,53 @@ def build_participant_donors(cleaned_window_fixes, *, max_gap_ms=MAX_GAP_MS):
     if trips.empty:
         trips = pd.DataFrame(columns=['trip_start_ms', 'trip_end_ms'])
     trip_donors = observed_trip_templates(fixes, trips, min_fixes=3)
+
+    # CORTEX2_CONTINUOUS_ROUTE_DONORS_V1
+    # Keep detected trip donors, but also make continuously
+    # observed GPS runs available for geographic subsection
+    # matching. Split only at unsupported GPS gaps.
+    observed = (
+        fixes.sort_values("timestamp")
+        .reset_index(drop=True)
+    )
+
+    if "imputed" in observed.columns:
+        observed = observed.loc[
+            ~observed.imputed.fillna(False)
+        ].reset_index(drop=True)
+
+    if len(observed) >= 2:
+        t = observed.timestamp.to_numpy(dtype=np.int64)
+
+        # Split continuous donor trajectories only at actual
+        # unsupported GPS gaps, not at UTC midnight.
+        boundaries = np.diff(t) > max_gap_ms
+
+        cuts = np.r_[
+            0,
+            np.flatnonzero(boundaries) + 1,
+            len(observed)
+        ]
+
+        for a, b in zip(cuts[:-1], cuts[1:]):
+            segment = (
+                observed.iloc[a:b]
+                .copy()
+                .reset_index(drop=True)
+            )
+
+            if len(segment) < 3:
+                continue
+
+            if (
+                segment.timestamp.iloc[-1]
+                - segment.timestamp.iloc[0]
+                < 60000
+            ):
+                continue
+
+            trip_donors.append(segment)
+
     stays = []
     for episode in episodes.itertuples(index=False):
         lo, hi = int(episode.episode_start_ms), int(episode.episode_end_ms)

@@ -273,36 +273,65 @@ def _bridge(left, right, donor, cfg):
 
 
 # CORTEX2_GEOGRAPHIC_ROUTE_V1
+
 def _matching_route_sections(left, right, trip_donors, cfg):
-    """Find observed route subsections near both gap endpoints."""
+    """Match observed route subsections in either travel direction.
+
+    Prefer geographic agreement while favoring more direct
+    observed movement. Donor duration is not an exclusion rule.
+    """
     matches = []
+
+    endpoint_distance = float(_haversine(
+        left.latitude, left.longitude,
+        right.latitude, right.longitude
+    ))
+
+    def distances(frame, anchor):
+        lat = np.deg2rad(frame.latitude.to_numpy(float))
+        lon = np.deg2rad(frame.longitude.to_numpy(float))
+        a = np.deg2rad(float(anchor.latitude))
+        b = np.deg2rad(float(anchor.longitude))
+
+        h = (
+            np.sin((lat-a)/2)**2
+            + np.cos(lat)*np.cos(a)*np.sin((lon-b)/2)**2
+        )
+        return 2*EARTH_RADIUS_M*np.arcsin(
+            np.sqrt(np.clip(h, 0, 1))
+        )
+
+    def route_length(frame):
+        lat = np.deg2rad(frame.latitude.to_numpy(float))
+        lon = np.deg2rad(frame.longitude.to_numpy(float))
+
+        h = (
+            np.sin(np.diff(lat)/2)**2
+            + np.cos(lat[:-1])*np.cos(lat[1:])
+            * np.sin(np.diff(lon)/2)**2
+        )
+        return float(np.sum(
+            2*EARTH_RADIUS_M*np.arcsin(
+                np.sqrt(np.clip(h, 0, 1))
+            )
+        ))
 
     for donor_index, donor in enumerate(trip_donors):
         d = _require_fixes(donor)
+
         if len(d) < cfg.min_donor_fixes:
             continue
+
         if "imputed" in d and d.imputed.any():
             continue
 
-        times = d.timestamp.to_numpy(dtype=np.int64)
-        if np.diff(times).max(initial=0) > cfg.max_supported_gap_ms:
+        timestamps = d.timestamp.to_numpy(dtype=np.int64)
+
+        if np.diff(timestamps).max(initial=0) > cfg.max_supported_gap_ms:
             continue
 
-        lat = d.latitude.to_numpy(dtype=float)
-        lon = d.longitude.to_numpy(dtype=float)
-
-        def distances(anchor):
-            a = np.deg2rad(float(anchor.latitude))
-            b = np.deg2rad(lat)
-            dl = np.deg2rad(lon - float(anchor.longitude))
-            h = (np.sin((b-a)/2)**2
-                 + np.cos(a)*np.cos(b)*np.sin(dl/2)**2)
-            return 2*EARTH_RADIUS_M*np.arcsin(
-                np.sqrt(np.clip(h, 0, 1))
-            )
-
-        ds = distances(left)
-        de = distances(right)
+        ds = distances(d, left)
+        de = distances(d, right)
 
         k = min(8, len(d))
         starts = np.argpartition(ds, k-1)[:k]
@@ -310,33 +339,61 @@ def _matching_route_sections(left, right, trip_donors, cfg):
 
         for i in starts:
             for j in ends:
-                if abs(int(i)-int(j))+1 < cfg.min_donor_fixes:
+                i, j = int(i), int(j)
+
+                if abs(i-j)+1 < cfg.min_donor_fixes:
                     continue
 
-                a, b = sorted((int(i), int(j)))
-                if times[b]-times[a] < cfg.min_template_span_ms:
+                a, b = sorted((i, j))
+
+                if timestamps[b]-timestamps[a] < cfg.min_template_span_ms:
                     continue
 
-                score = float(ds[i]+de[j])
+                endpoint_error = float(ds[i]+de[j])
 
-                # Compare endpoint mismatch with gap displacement,
-                # without imposing a donor-duration limit.
-                displacement = float(_haversine(
-                    left.latitude, left.longitude,
-                    right.latitude, right.longitude
-                ))
-                if score >= displacement:
+                # Retain existing geographic eligibility;
+                # no additional duration restriction.
+                if endpoint_error >= endpoint_distance:
                     continue
 
-                route = d.iloc[a:b+1].copy().reset_index(drop=True)
+                route = (
+                    d.iloc[a:b+1]
+                    .copy()
+                    .reset_index(drop=True)
+                )
+
                 if i > j:
-                    route = route.iloc[::-1].reset_index(drop=True)
+                    route = (
+                        route.iloc[::-1]
+                        .reset_index(drop=True)
+                    )
 
-                matches.append((score, donor_index, route))
+                distance = route_length(route)
 
-    matches.sort(key=lambda x: x[0])
-    return matches
+                # Directness preference among geographically
+                # matched routes. Endpoint errors are more
+                # strongly weighted than excess travel length.
+                excess = max(
+                    0.0, distance-endpoint_distance
+                )
 
+                rank = endpoint_error + 0.10*excess
+
+                matches.append((
+                    rank,
+                    endpoint_error,
+                    donor_index,
+                    route
+                ))
+
+    matches.sort(key=lambda item: (item[0], item[1]))
+
+    # Preserve original API:
+    # (endpoint_error, donor_index, route)
+    return [
+        (endpoint_error, donor_index, route)
+        for _, endpoint_error, donor_index, route in matches
+    ]
 
 
 def _bridge_matched_route(left, right, route, cfg):
