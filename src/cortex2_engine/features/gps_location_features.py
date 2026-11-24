@@ -301,3 +301,104 @@ def compute_daily_location_features(
         "unassigned_supported_duration_ms":
             unassigned_supported,
     }
+
+
+def compute_home_away_location_entropy(
+    assignments: pd.DataFrame,
+    *,
+    home_place_candidate_id,
+    home_status=None,
+) -> dict:
+    """Decompose time-weighted stationary-place entropy.
+
+    Assignments must use the same persistent place IDs as home inference.
+    All entropy values use natural logarithms (nats).
+    """
+    result = {
+        "away_location_entropy_nats": np.nan,
+        "away_effective_number_places": np.nan,
+        "away_place_count": np.nan,
+        "home_stationary_fraction": np.nan,
+        "home_away_binary_entropy_nats": np.nan,
+        "entropy_decomposition_residual": np.nan,
+        "away_location_entropy_status": "unknown_home",
+    }
+
+    required = {"place_candidate_id", "duration_ms"}
+    missing = required - set(assignments.columns)
+    if missing:
+        raise ValueError(f"Missing assignment columns: {sorted(missing)}")
+
+    x = assignments[list(required)].copy()
+    x["duration_ms"] = pd.to_numeric(
+        x["duration_ms"], errors="coerce"
+    )
+    x["place_candidate_id"] = pd.to_numeric(
+        x["place_candidate_id"], errors="coerce"
+    )
+    x = x.loc[
+        x["place_candidate_id"].notna()
+        & np.isfinite(x["duration_ms"])
+        & (x["duration_ms"] > 0)
+    ]
+
+    if x.empty:
+        result["away_location_entropy_status"] = "no_assigned_place_time"
+        return result
+
+    if (
+        home_place_candidate_id is None
+        or not pd.notna(home_place_candidate_id)
+        or (
+            home_status is not None
+            and home_status != "observed_or_reconstructed"
+        )
+    ):
+        return result
+
+    home_id = int(home_place_candidate_id)
+
+    occupancy = x.groupby("place_candidate_id")["duration_ms"].sum()
+    total = float(occupancy.sum())
+    home_time = float(occupancy.get(home_id, 0.0))
+    away = occupancy.drop(home_id, errors="ignore")
+    away_total = float(away.sum())
+    p_home = home_time / total
+
+    result["home_stationary_fraction"] = p_home
+    result["away_place_count"] = int(len(away))
+
+    binary = 0.0
+    for probability in (p_home, 1.0 - p_home):
+        if probability > 0:
+            binary -= probability * np.log(probability)
+
+    result["home_away_binary_entropy_nats"] = float(binary)
+
+    if away_total <= 0:
+        result["away_location_entropy_status"] = "no_observed_away_time"
+        return result
+
+    away_probabilities = away.to_numpy(dtype=float) / away_total
+    h_away = -float(np.sum(
+        away_probabilities * np.log(away_probabilities)
+    ))
+    if abs(h_away) < 1e-15:
+        h_away = 0.0
+
+    all_probabilities = occupancy.to_numpy(dtype=float) / total
+    h_total = -float(np.sum(
+        all_probabilities * np.log(all_probabilities)
+    ))
+
+    result.update({
+        "away_location_entropy_nats": h_away,
+        "away_effective_number_places": float(np.exp(h_away)),
+        "entropy_decomposition_residual": float(
+            h_total - (binary + (1.0 - p_home) * h_away)
+        ),
+        "away_location_entropy_status": (
+            "observed_zero" if h_away == 0.0 else "observed_value"
+        ),
+    })
+    return result

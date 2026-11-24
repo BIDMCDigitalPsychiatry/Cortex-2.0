@@ -46,7 +46,10 @@ from cortex2_engine.features.gps_place_candidates import (
 
 from cortex2_engine.features.gps_location_features import (
     compute_daily_location_features,
+    compute_home_away_location_entropy,
 )
+from cortex2_engine.features.gps_home_shared import calculate_home_time, HomeConfig
+from cortex2_engine.features.gps_shared_place_reference import load_reference
 
 from cortex2_engine.features.gps_mobility_features import (
     compute_daily_mobility_features,
@@ -126,6 +129,33 @@ assessments = pd.read_csv(
     ASSESSMENT_PATH
 )
 
+
+# CORTEX2_SINGLE_PARTICIPANT_ENTROPY_TEST
+import os
+
+test_participant = os.environ.get("CORTEX2_PARTICIPANT_ID")
+
+if test_participant:
+    requested = requested.loc[
+        requested["participant_id"].astype(str).eq(test_participant)
+    ].copy()
+
+    if requested.empty:
+        raise ValueError(
+            f"No clinical windows for {test_participant}"
+        )
+
+    # Never overwrite the primary cohort outputs during testing.
+    DAILY_OUT = DAILY_OUT.with_name(
+        f"{DAILY_OUT.stem}_{test_participant}{DAILY_OUT.suffix}"
+    )
+    WEEKLY_OUT = WEEKLY_OUT.with_name(
+        f"{WEEKLY_OUT.stem}_{test_participant}{WEEKLY_OUT.suffix}"
+    )
+    SUMMARY_OUT = SUMMARY_OUT.with_name(
+        f"{SUMMARY_OUT.stem}_{test_participant}{SUMMARY_OUT.suffix}"
+    )
+
 requested["date"] = (
     pd.to_datetime(
         requested["date"]
@@ -197,6 +227,7 @@ print(
 # ============================================================
 
 daily_feature_rows = []
+shared_weekly_rows = []
 
 
 for participant_id in sorted(
@@ -491,6 +522,17 @@ for participant_id in sorted(
             date
         ] = microsegments
 
+
+    # CORTEX2_CANONICAL_SHARED_REFERENCE_V1
+    # Shared entropy uses the same persisted participant places and home
+    # reference as the daily EMA workflow (retrospective, not prospective).
+    shared_assignments, shared_places, shared_home, shared_reference_meta = (
+        load_reference(
+            participant_id,
+            required_dates=unique_days["date"].astype(str).tolist(),
+        )
+    )
+
     # --------------------------------------------------------
     # Each clinical window gets its OWN place candidate model.
     # --------------------------------------------------------
@@ -581,6 +623,118 @@ for participant_id in sorted(
 
             places = pd.DataFrame()
 
+
+        # Pooled weekly entropy uses persistent place occupancy,
+        # not the mean of daily entropy values.
+        shared_window = shared_assignments.loc[
+            shared_assignments["date"].astype(str).isin(
+                window_days["date"].astype(str)
+            )
+        ]
+        shared_support_ms = sum(
+            float(day_metadata[str(d)]["supported_duration_ms"])
+            for d in window_days["date"]
+        )
+        pooled_total = compute_daily_location_features(
+            shared_window,
+            supported_duration_ms=shared_support_ms,
+        )
+        pooled_away = compute_home_away_location_entropy(
+            shared_window,
+            home_place_candidate_id=shared_home["home_place_candidate_id"],
+            home_status=shared_home["home_status"],
+        )
+        # CORTEX2_ENTROPY_COVERAGE_V1
+        eligible_dates = []
+        for d in window_days["date"].astype(str).unique():
+            support = float(
+                day_metadata[d]["supported_duration_ms"]
+            )
+            day_places = shared_window.loc[
+                shared_window["date"].astype(str).eq(d)
+            ]
+            day_total = compute_daily_location_features(
+                day_places,
+                supported_duration_ms=support,
+            )
+            if (
+                np.isfinite(support)
+                and support >= HomeConfig().min_daily_supported_ms
+                and day_total["assigned_place_time_ms"] > 0
+            ):
+                eligible_dates.append(d)
+
+        eligible_window = shared_window.loc[
+            shared_window["date"].astype(str).isin(
+                eligible_dates
+            )
+        ]
+
+        eligible_support_ms = sum(
+            float(day_metadata[d]["supported_duration_ms"])
+            for d in eligible_dates
+        )
+
+        eligible_total = compute_daily_location_features(
+            eligible_window,
+            supported_duration_ms=eligible_support_ms,
+        )
+        eligible_away = compute_home_away_location_entropy(
+            eligible_window,
+            home_place_candidate_id=shared_home[
+                "home_place_candidate_id"
+            ],
+            home_status=shared_home["home_status"],
+        )
+
+        shared_weekly_rows.append({
+            "clinical_window_id": window_id,
+            "pooled_location_entropy_nats":
+                pooled_total["location_entropy_nats"],
+            "pooled_away_location_entropy_nats":
+                pooled_away["away_location_entropy_nats"],
+            "pooled_home_stationary_fraction":
+                pooled_away["home_stationary_fraction"],
+            "pooled_away_place_count":
+                pooled_away["away_place_count"],
+            "pooled_away_effective_number_places":
+                pooled_away["away_effective_number_places"],
+            "pooled_entropy_decomposition_residual":
+                pooled_away["entropy_decomposition_residual"],
+            "pooled_away_location_entropy_status":
+                pooled_away["away_location_entropy_status"],
+            "pooled_place_time_fraction":
+                pooled_total["place_time_fraction_of_supported"],
+            "shared_home_status": shared_home["home_status"],
+            "shared_home_place_candidate_id": shared_home["home_place_candidate_id"],
+            "shared_home_confidence": shared_home.get("home_confidence", np.nan),
+            "shared_place_reference_scope": "retrospective_union_of_configured_raw_sources",
+            "pooled_eligible_days": len(eligible_dates),
+            "pooled_eligible_supported_duration_ms":
+                eligible_support_ms,
+            "pooled_eligible_location_entropy_nats":
+                eligible_total["location_entropy_nats"],
+            "pooled_eligible_place_count":
+                eligible_total["n_observed_places"],
+            "pooled_eligible_effective_number_places":
+                eligible_total["effective_number_places"],
+            "pooled_eligible_away_place_count":
+                eligible_away["away_place_count"],
+            "pooled_eligible_away_effective_number_places":
+                eligible_away["away_effective_number_places"],
+            "pooled_eligible_entropy_decomposition_residual":
+                eligible_away["entropy_decomposition_residual"],
+            "pooled_eligible_away_location_entropy_nats":
+                eligible_away["away_location_entropy_nats"],
+            "pooled_eligible_home_stationary_fraction":
+                eligible_away["home_stationary_fraction"],
+            "pooled_eligible_away_entropy_status":
+                eligible_away["away_location_entropy_status"],
+            "pooled_eligible_place_time_fraction":
+                eligible_total[
+                    "place_time_fraction_of_supported"
+                ],
+        })
 
         trip_daily = {}
 
@@ -683,6 +837,57 @@ for participant_id in sorted(
                     ),
                 )
             )
+
+            # Daily shared-place entropy, using the same
+            # participant-level home and place identifiers.
+            shared_day = shared_window.loc[
+                shared_window["date"].astype(str).eq(date)
+            ]
+            shared_total = compute_daily_location_features(
+                shared_day,
+                supported_duration_ms=meta["supported_duration_ms"],
+            )
+            shared_away = compute_home_away_location_entropy(
+                shared_day,
+                home_place_candidate_id=shared_home["home_place_candidate_id"],
+                home_status=shared_home["home_status"],
+            )
+            result["shared_location_entropy_nats"] = (
+                shared_total["location_entropy_nats"]
+            )
+            result.update(shared_away)
+            result["shared_place_time_fraction"] = (
+                shared_total["place_time_fraction_of_supported"]
+            )
+            result["shared_home_status"] = shared_home["home_status"]
+            result["shared_home_place_candidate_id"] = shared_home["home_place_candidate_id"]
+            result["shared_home_confidence"] = shared_home.get("home_confidence", np.nan)
+            result["shared_place_reference_scope"] = "retrospective_union_of_configured_raw_sources"
+
+            # CORTEX2_WEEKLY_DAILY_ENTROPY_ELIGIBILITY_V1
+            day_support = float(meta["supported_duration_ms"])
+            eligible = (
+                np.isfinite(day_support)
+                and day_support >= HomeConfig().min_daily_supported_ms
+                and shared_total["assigned_place_time_ms"] > 0
+            )
+            result["shared_entropy_day_eligible"] = bool(eligible)
+            result["shared_entropy_coverage_status"] = (
+                "eligible" if eligible
+                else "insufficient_supported_time"
+                if not np.isfinite(day_support)
+                or day_support < HomeConfig().min_daily_supported_ms
+                else "no_assigned_place_time"
+            )
+            result["shared_eligible_location_entropy_nats"] = (
+                shared_total["location_entropy_nats"]
+                if eligible else np.nan
+            )
+            result["shared_eligible_away_entropy_nats"] = (
+                shared_away["away_location_entropy_nats"]
+                if eligible else np.nan
+            )
+
 
             result.update(
                 {
@@ -984,6 +1189,13 @@ weekly = (
 )
 
 
+
+weekly = weekly.merge(
+    pd.DataFrame(shared_weekly_rows),
+    on="clinical_window_id",
+    how="left",
+    validate="one_to_one",
+)
 
 trip_weekly = (
     daily.groupby("clinical_window_id", as_index=False)

@@ -44,7 +44,10 @@ from cortex2_engine.features.gps_place_candidates import (
 )
 from cortex2_engine.features.gps_location_features import (
     compute_daily_location_features,
+    compute_home_away_location_entropy,
 )
+from cortex2_engine.features.gps_home_shared import calculate_home_time, HomeConfig
+from cortex2_engine.features.gps_shared_place_reference import load_reference
 
 
 # ============================================================
@@ -249,7 +252,9 @@ print(
 # DAILY FEATURE EXTRACTION
 # ============================================================
 
+# CORTEX2_DAILY_SHARED_ENTROPY_V1
 feature_rows = []
+
 
 n_days = len(ema)
 
@@ -585,6 +590,7 @@ for i, ema_row in ema.iterrows():
     )
 
 
+
     # ========================================================
     # PLACE CANDIDATES
     # ========================================================
@@ -662,6 +668,99 @@ for i, ema_row in ema.iterrows():
 features = pd.DataFrame(
     feature_rows
 )
+
+
+# CORTEX2_DAILY_SHARED_ENTROPY_V1: persistent participant places.
+shared_entropy_rows = {}
+
+for participant_id, day_rows in features.groupby("participant_id"):
+    assignments = pd.DataFrame(
+        columns=["date", "place_candidate_id", "duration_ms"]
+    )
+    home = {
+        "home_place_candidate_id": np.nan,
+        "home_status": "insufficient_observability",
+    }
+
+    # CORTEX2_CANONICAL_SHARED_REFERENCE_V1
+    # Never rebuild a separate EMA-only place model, as that changes IDs.
+    assignments, shared_places, home, shared_reference_meta = load_reference(
+        participant_id,
+        required_dates=day_rows["date"].astype(str).tolist(),
+    )
+
+    for idx, day in day_rows.iterrows():
+        date = str(day["date"])
+        day_assignments = assignments.loc[
+            assignments["date"].astype(str).eq(date)
+        ]
+
+        supported = day.get("supported_duration_ms", np.nan)
+        supported = (
+            float(supported)
+            if pd.notna(supported) else 0.0
+        )
+
+        total = compute_daily_location_features(
+            day_assignments,
+            supported_duration_ms=supported,
+        )
+        away = compute_home_away_location_entropy(
+            day_assignments,
+            home_place_candidate_id=home["home_place_candidate_id"],
+            home_status=home["home_status"],
+        )
+
+        # CORTEX2_ENTROPY_COVERAGE_V1
+        eligible = (
+            np.isfinite(supported)
+            and supported >= HomeConfig().min_daily_supported_ms
+            and total["assigned_place_time_ms"] > 0
+        )
+
+        coverage_status = (
+            "eligible"
+            if eligible
+            else (
+                "insufficient_supported_time"
+                if (not np.isfinite(supported)
+                    or supported < HomeConfig().min_daily_supported_ms)
+                else "no_assigned_place_time"
+            )
+        )
+
+        shared_entropy_rows[idx] = {
+            "shared_location_entropy_nats":
+                total["location_entropy_nats"],
+            "shared_effective_number_places":
+                total["effective_number_places"],
+            "shared_n_observed_places":
+                total["n_observed_places"],
+            "shared_assigned_place_time_ms":
+                total["assigned_place_time_ms"],
+            "shared_place_time_fraction":
+                total["place_time_fraction_of_supported"],
+            "shared_home_status": home["home_status"],
+            "shared_home_place_candidate_id": home["home_place_candidate_id"],
+            "shared_home_confidence": home.get("home_confidence", np.nan),
+            "shared_place_reference_scope": "retrospective_union_of_configured_raw_sources",
+            "shared_entropy_day_eligible": bool(eligible),
+            "shared_entropy_coverage_status": coverage_status,
+            "shared_eligible_location_entropy_nats": (
+                total["location_entropy_nats"]
+                if eligible else np.nan
+            ),
+            "shared_eligible_away_entropy_nats": (
+                away["away_location_entropy_nats"]
+                if eligible else np.nan
+            ),
+            **away,
+        }
+
+shared_entropy = pd.DataFrame.from_dict(
+    shared_entropy_rows, orient="index"
+)
+features = features.join(shared_entropy)
 
 features = (
     features.sort_values(
