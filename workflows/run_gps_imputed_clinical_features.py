@@ -169,7 +169,9 @@ def run_participant(participant, *, m, output_dir):
             'observed_displacement_m': observed.get('displacement_m'),
             'observed_endpoint_displacement_m': observed.get('endpoint_displacement_m'),
             'observed_supported_duration_ms': observed.get('observed_supported_duration_ms'),
+            'observed_life_space_area_m2': observed.get('life_space_area_m2'),
             'mean_imputed_supported_duration_ms': result['estimates']['imputed_supported_duration_ms'].mean(),
+            'mean_imputed_life_space_area_m2': result['estimates']['life_space_area_m2'].mean(),
             'scope': 'full_clinical_window_with_explicit_unresolved_boundaries',
         })
         daily_cov = day_coverage(cleaned, days)

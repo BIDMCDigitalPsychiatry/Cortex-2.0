@@ -12,6 +12,7 @@ from cortex2_engine.features.gps_spatial_semantics import add_gps_spatial_semant
 from cortex2_engine.features.gps_trajectory_plausibility import add_gps_trajectory_plausibility
 from cortex2_engine.features.gps_anchor_episodes import build_anchor_compatible_location_episodes
 from cortex2_engine.features.gps_place_candidates import build_place_candidates
+#from cortex2_engine.features.gps_life_space import build_life_space_polygon
 from cortex2_engine.features.gps_trip_features import (
     build_place_visits, build_observed_trips, add_smoothed_trip_path_distances,
 )
@@ -87,6 +88,7 @@ def recompute_timeline(fixes, *, start_ms, end_ms, max_gap_ms=60_000,
         "home_time_ms": np.nan, "home_status": "insufficient_observability",
         "supported_duration_ms": 0.0, "observed_supported_duration_ms": 0.0,
         "imputed_supported_duration_ms": 0.0,
+        #"life_space_area_m2": np.nan, "life_space_hull_latlon": None,
     }
     if edges.empty:
         return results
@@ -116,6 +118,9 @@ def recompute_timeline(fixes, *, start_ms, end_ms, max_gap_ms=60_000,
         episodes, compatibility_multiplier=compatibility_multiplier)
     if assignments.empty or places.empty:
         return results
+    #life_space_area_m2, life_space_hull_latlon = build_life_space_polygon(places)
+    #results["life_space_area_m2"] = float(life_space_area_m2)
+    #results["life_space_hull_latlon"] = life_space_hull_latlon
     visits = build_place_visits(assignments, min_endpoint_dwell_ms=min_endpoint_dwell_ms)
     trips = build_observed_trips(trajectory, visits, places)
     trips = annotate_trip_imputation_provenance(trips, edges)
@@ -169,7 +174,9 @@ def audit_completed_timeline(timeline, max_gap_ms=60_000, *,
 
 def pool_completed_mobility_features(estimates, completion):
     """Summarize the M complete timelines. No confidence-interval claim."""
-    names = ("trip_count", "path_length_m", "displacement_m", "endpoint_displacement_m", "raw_path_length_m", "home_time_ms")
+    names = ("trip_count", "path_length_m", "displacement_m", "endpoint_displacement_m", "raw_path_length_m", "home_time_ms"
+             #, "life_space_area_m2"
+             )
     if estimates.empty or completion.empty or len(estimates) != len(completion):
         raise ValueError("Empty or misaligned imputation results")
     if not estimates.imputation.equals(completion.imputation):
@@ -217,6 +224,7 @@ def recompute_multiple_timelines(fixes, donors, *, start_ms, end_ms,
         features = recompute_timeline(
             timeline, start_ms=start_ms, end_ms=end_ms,
             max_gap_ms=cfg.max_supported_gap_ms, **kwargs)
+        #life_space_hulls = features.pop("life_space_hull_latlon", None)
         records.append({"imputation": i, **features})
     estimates = pd.DataFrame(records)
     completion = pd.DataFrame(checks)

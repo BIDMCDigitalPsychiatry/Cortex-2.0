@@ -9,13 +9,6 @@ GPS life space computation. Features include:
 
 import numpy as np
 import pandas as pd
-from cortex2_engine.features.gps_anchor_episodes import build_anchor_compatible_location_episodes
-from cortex2_engine.features.gps_intervals import build_gps_intervals
-from cortex2_engine.features.gps_pipeline_qc import GPSQCConfig, clean_gps_fixes
-from cortex2_engine.features.gps_place_candidates import build_place_candidates
-from cortex2_engine.features.gps_shared_recomputation import annotate_interval_provenance
-from cortex2_engine.features.gps_spatial_semantics import add_gps_spatial_semantics
-from cortex2_engine.features.gps_trajectory_plausibility import add_gps_trajectory_plausibility
 
 EARTH_RADIUS_M = 6_371_008.8
 
@@ -239,65 +232,4 @@ def build_life_space_polygon(places):
     hull_lats, hull_lons = reverse_cartesian_transform(hull[:, 0], hull[:, 1], lat_0, lon_0)
 
     return area, np.column_stack((hull_lats, hull_lons))
-
-
-################## LEGACY CODE BELOW ##################
-
-def compute_life_space(fixes, *, start_ms, end_ms, max_gap_ms=60_000,
-                       compatibility_multiplier=1.0,
-                       min_endpoint_dwell_ms=600_000,
-                       acceleration_noise_density_m_s1p5=1.0,
-                       home_config=None, qc_config=None):
-    """Recompute mobility in one window using the same Cortex place substrate.
-
-    For home inference, fixes must span enough reference nights; otherwise
-    home_time_ms remains missing. Never infer home from a single day's mode.
-    """
-    # Shared QC is applied to both observed and completed timelines.
-    qc = qc_config or GPSQCConfig(max_gap_ms=max_gap_ms)
-    fixes = clean_gps_fixes(fixes, qc)
-    edges = build_gps_intervals(
-        fixes, window_start_ms=int(start_ms), window_end_ms=int(end_ms),
-        max_gap_ms=int(max_gap_ms),
-    )
-    edges = annotate_interval_provenance(edges, fixes)
-    results = {
-        "trip_count": np.nan, "path_length_m": np.nan,
-        "displacement_m": np.nan, "endpoint_displacement_m": np.nan,
-        "raw_path_length_m": np.nan,
-        "home_time_ms": np.nan, "home_status": "insufficient_observability",
-        "supported_duration_ms": 0.0, "observed_supported_duration_ms": 0.0,
-        "imputed_supported_duration_ms": 0.0,
-    }
-    if edges.empty:
-        return results
-    spatial_all = add_gps_spatial_semantics(edges.copy())
-    trajectory = add_gps_trajectory_plausibility(
-        spatial_all, max_plausible_speed_kmh=qc.max_speed_kmh)
-    good = (trajectory.supported.fillna(False).astype(bool)
-            & ~trajectory.trajectory_status.eq("implausible_speed"))
-    # Do not confuse GPS time support with physically plausible edges.
-    # Keep the same valid mask for observed and imputed branches.
-    results["observed_supported_duration_ms"] = float(
-        edges.loc[good & ~edges.involves_imputation, "duration_ms"].sum())
-    results["imputed_supported_duration_ms"] = float(
-        edges.loc[good & edges.involves_imputation, "duration_ms"].sum())
-    results["supported_duration_ms"] = (
-        results["observed_supported_duration_ms"] +
-        results["imputed_supported_duration_ms"])
-    if not good.any():
-        return results
-    # Location microsegments use only temporally supported and
-    # trajectory-plausible edges.
-    episodes = build_anchor_compatible_location_episodes(
-        spatial_all.loc[good].copy())
-    if episodes.empty:
-        return results
-    assignments, places = build_place_candidates(
-        episodes, compatibility_multiplier=compatibility_multiplier)
-    if assignments.empty or places.empty:
-        return results
-    area, hull = build_life_space_polygon(places)
-
-    pass
     
